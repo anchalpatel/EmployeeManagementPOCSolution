@@ -1,0 +1,50 @@
+﻿@model EmployeeManagement.MVCFramework.Models.View_Model.EmployeeUpdateModel
+
+@{
+    ViewBag.Title = "Update Admin";
+}
+
+<h2>Update Admin</h2>
+
+@using (Html.BeginForm("UpdateAdmin", "Admin", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
+        <label for="FirstName">First Name</label>
+        @Html.TextBoxFor(m => m.FirstName, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.FirstName, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label for="LastName">Last Name</label>
+        @Html.TextBoxFor(m => m.LastName, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.LastName, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label for="Email">Email</label>
+        @Html.TextBoxFor(m => m.Email, new { @class = "form-control", type = "email" })
+        @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label for="PhoneNumber">Phone Number</label>
+        @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control", type = "tel" })
+        @Html.ValidationMessageFor(m => m.PhoneNumber, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label for="Address">Address</label>
+        @Html.TextAreaFor(m => m.Address, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.Address, "", new { @class = "text-danger" })
+    </div>
+
+    
+    @*@Html.HiddenFor(m => m.Roles)*@ 
+    @Html.HiddenFor(m => m.Id) 
+    
+    @Html.HiddenFor(m => m.OrganizationId)
+
+    <button type="submit" class="btn btn-primary">Update Admin</button>
+}

@@ -1,0 +1,85 @@
+﻿@using EmployeeManagement.MVCFramework.Helpers
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - My ASP.NET Application</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+</head>
+<body>
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+        <div class="container">
+            @Html.ActionLink("Application name", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Toggle navigation" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between w-100">
+                <!-- Left Side: Home and Role-Based Links -->
+                <ul class="navbar-nav flex-grow-1">
+                    <li>@Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
+                    
+                    @if (Session["AuthToken"] != null)
+                    {
+                        // Get roles from the session or JWT token
+                        var roles = TokenHelper.GetRolesFromToken(Session["AuthToken"].ToString());
+
+                        // Display role-based links
+                        if (roles.Contains("SuperAdmin"))
+                        {
+                            <li>@Html.ActionLink("Manage Organization", "GetAllOrganizations", "Organization", null, new { @class = "nav-link" })</li>
+                        }
+
+                        if (roles.Contains("HR") || roles.Contains("Admin"))
+                        {
+                            <li>@Html.ActionLink("Manage Employee", "ManageEmployee", "Employee", null, new { @class = "nav-link" })</li>
+                        }
+
+                        if (roles.Contains("Admin"))
+                        {
+                            <li>@Html.ActionLink("Manage HR", "ManageHR", "HR", null, new { @class = "nav-link" })</li>
+                        }
+                        if (roles.Contains("HR"))
+                        {
+                            <li>@Html.ActionLink("Employee Data", "EmployeeData", "Employee", null, new { @class = "nav-link" })</li>
+                        }
+                    }
+                </ul>
+
+                <!-- Right Side: Login, Register, Logout Buttons -->
+                <ul class="navbar-nav">
+                    @if (Session["AuthToken"] != null)
+                    {
+                        <li class="nav-item">
+                            @Html.ActionLink("Logout", "Logout", "Account", null, new { @class = "btn btn-danger nav-link" })
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            @Html.ActionLink("Login", "Login", "Account", null, new { @class = "btn btn-primary nav-link mx-2" })
+                        </li>
+                        @*<li class="nav-item">
+                            @Html.ActionLink("Register", "Register", "Account", null, new { @class = "btn btn-secondary nav-link mx-2" })
+                        </li>*@
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container body-content">
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
+        </footer>
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,51 @@
+﻿@model List<EmployeeManagement.MVCFramework.Models.View_Model.OrganizationViewModel>
+
+<h2>Organizations</h2>
+
+<!-- Create Organization Button at the top-right corner -->
+<div class="text-end mb-4">
+    <a href="@Url.Action("CreateOrganization", "Organization")" class="btn btn-success btn-lg">
+        Create Organization
+    </a>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <div class="row">
+        @foreach (var organization in Model)
+        {
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <a href="@Url.Action("ViewOrganization", "Admin", new { id = organization.Id })" class="text-decoration-none">
+                                @organization.Name
+                            </a>
+                        </h5>
+                        <input type="hidden" value="@organization.Id" name="OrganizationId" />
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Address:</strong> @organization.Address</p>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("UpdateOrganization", "Organization", new { organizationId = organization.Id })" class="btn btn-sm btn-warning">Update</a>
+
+                            <a href="@Url.Action("ManageAdmin", "Admin", new { organizationId = organization.Id, organizationName = organization.Name })" class="btn btn-sm btn-info">Manage Admin</a>
+
+                            <form action="@Url.Action("DeleteOrganization", "Organization", new { organizationId = organization.Id })" method="post" onsubmit="return confirm('Are you sure you want to delete this organization?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="_method" value="DELETE" />
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p>No organizations found.</p>
+}
