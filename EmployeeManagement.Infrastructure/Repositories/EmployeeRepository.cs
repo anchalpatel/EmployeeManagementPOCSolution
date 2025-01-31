@@ -78,32 +78,31 @@ namespace EmployeeManagement.Infrastructure.Repositories
 
         public async Task<IEnumerable<EmployeeDTO>> GetAllHr(int organizationId)
         {
-            var emp = await _dbContext.Employees.Where(e => e.OrganizationId == organizationId && e.IsDeleted == false).ToListAsync();
-            if (emp == null) {
-                return null;
-            }
-            List<EmployeeDTO> result = new List<EmployeeDTO>();
-            foreach(var employee in emp)
-            {
-                bool isHR = await _roleRepository.IsInRole(employee.UserId, "HR");
-                if(isHR)
-                {
-                    EmployeeDTO newEmp = new EmployeeDTO()
-                    {
-                        Id = employee.Id,
-                        FirstName = employee.FirstName,
-                        LastName = employee.LastName,
-                        Email = employee.Email,
-                        PhoneNumber = employee.PhoneNumber,
-                        Address = employee.Address,
-                        userId = employee.UserId,
-                        CreatedBy = employee.CreatedBy,
-                        CreareAt = employee.CreatedAt,
-                    };
-                    result.Add(newEmp);
-                }
-            }
-            return result;
+            var hr = await (from emp in _dbContext.Employees
+                              join userRole in _dbContext.UserRoles
+                              on emp.UserId equals userRole.UserId
+                              join role in _dbContext.Roles
+                              on userRole.RoleId equals role.Id 
+                              where emp.OrganizationId == organizationId
+                              && emp.IsDeleted == false
+                              && role.IsDeleted == false
+                              && userRole.IsDeleted == false
+                              && role.Name == "HR"
+                              select new EmployeeDTO
+                              {
+                                  Id = emp.Id,
+                                  FirstName = emp.FirstName,
+                                  LastName = emp.LastName,
+                                  Email = emp.Email,
+                                  PhoneNumber = emp.PhoneNumber,
+                                  Address = emp.Address,
+                                  userId = emp.UserId,
+                                  CreatedBy = emp.CreatedBy,
+                                  CreareAt = emp.CreatedAt,
+                              }).ToListAsync();
+
+            return hr;
+
         }
 
         public async Task<Employee> GetEmployeeByUserId(string userId)
@@ -114,27 +113,46 @@ namespace EmployeeManagement.Infrastructure.Repositories
 
         public async Task<EmployeeDTO> GetEmployeeDetails(int employeeId)
         {
-            var employee = await _dbContext.Employees.FirstOrDefaultAsync(emp => emp.Id == employeeId && emp.IsDeleted == false);
+            var employee = await (from emp in _dbContext.Employees
+                            join userRole in _dbContext.UserRoles
+                            on emp.UserId equals userRole.UserId
+                            join role in _dbContext.Roles
+                            on userRole.RoleId equals role.Id
+                            where emp.Id == employeeId
+                            && emp.IsDeleted == false
+                            && role.IsDeleted == false
+                            && userRole.IsDeleted == false
+                            group role.Name by new
+                            {
+                                emp.Id,
+                                emp.FirstName,
+                                emp.LastName,
+                                emp.Email,
+                                emp.UserId,
+                                emp.OrganizationId,
+                                emp.Address,
+                                emp.CreatedAt,
+                                emp.CreatedBy,
+                                emp.PhoneNumber
+                            } into empRoles
+                            select new EmployeeDTO
+                            {
+                                Id = empRoles.Key.Id,
+                                FirstName = empRoles.Key.FirstName,
+                                LastName = empRoles.Key.LastName,
+                                Email = empRoles.Key.Email,
+                                PhoneNumber = empRoles.Key.PhoneNumber,
+                                Address = empRoles.Key.Address,
+                                userId = empRoles.Key.UserId,
+                                CreatedBy = empRoles.Key.CreatedBy,
+                                CreareAt = empRoles.Key.CreatedAt,
+                                Roles = empRoles.ToList()
+                            }).FirstOrDefaultAsync();
             if(employee == null)
             {
-                return null;
+                throw new Exception("Employee Not Found");
             }
-            EmployeeDTO model = new EmployeeDTO()
-            {
-                Id = employee.Id,
-                FirstName = employee.FirstName,
-                LastName = employee.LastName,
-                Email = employee.Email,
-                PhoneNumber = employee.PhoneNumber,
-                Address = employee.Address,
-                userId = employee.UserId,
-                CreatedBy = employee.CreatedBy,
-                CreareAt = employee.CreatedAt,
-            };
-            var user = await _userManager.FindByIdAsync(employee.UserId);
-            var roles = await _userManager.GetRolesAsync(user);
-            model.Roles = (List<string>?)roles;
-            return model ;
+            return employee;
         }
 
         public async Task<IEnumerable<EmployeeDTO>> GetEmployees(int organizationId)
@@ -188,41 +206,66 @@ namespace EmployeeManagement.Infrastructure.Repositories
 
         public async Task<IEnumerable<EmployeeDTO>> GetEmployeesInuserRole(int organizationId)
         {
-            var employees = await _dbContext.Employees.Where(e => e.OrganizationId == organizationId && e.IsDeleted == false).ToListAsync();
-            List<EmployeeDTO> empList = new List<EmployeeDTO>();
-            foreach (var emp in employees)
-            {
-                var empUser = await _userManager.FindByIdAsync(emp.UserId);
-                if (empUser == null)
-                {
-                    throw new Exception("User corresponds to employe not found");
-                }
-                var roles = await _userManager.GetRolesAsync(empUser);
-                var roleIds = await _dbContext.UserRoles.Where(ur => ur.UserId == emp.UserId && ur.IsDeleted == false)
-                                                           .Select(ur => ur.RoleId)
-                                                           .ToListAsync();
-                var validRole = await _dbContext.Roles
-                                                      .Where(r => roleIds.Contains(r.Id) && r.Name == "User")
-                                                      .ToListAsync();
-               
-                if(validRole != null)
-                {
-                    EmployeeDTO employee = new EmployeeDTO()
-                    {
-                        Id = emp.Id,
-                        FirstName = emp.FirstName,
-                        LastName = emp.LastName,
-                        Email = emp.Email,
-                        PhoneNumber = emp.PhoneNumber,
-                        Address = emp.Address,
-                        userId = emp.UserId,
-                        CreatedBy = emp.CreatedBy,
-                        CreareAt = emp.CreatedAt,
-                    };
-                    empList.Add(employee);
-                }
-            }
-            return empList;
+            //var employees = await _dbContext.Employees.Where(e => e.OrganizationId == organizationId && e.IsDeleted == false).ToListAsync();
+            //List<EmployeeDTO> empList = new List<EmployeeDTO>();
+            //foreach (var emp in employees)
+            //{
+            //    var empUser = await _userManager.FindByIdAsync(emp.UserId);
+            //    if (empUser == null)
+            //    {
+            //        throw new Exception("User corresponds to employe not found");
+            //    }
+            //    var roles = await _userManager.GetRolesAsync(empUser);
+            //    var roleIds = await _dbContext.UserRoles.Where(ur => ur.UserId == emp.UserId && ur.IsDeleted == false)
+            //                                               .Select(ur => ur.RoleId)
+            //                                               .ToListAsync();
+            //    var validRole = await _dbContext.Roles
+            //                                          .Where(r => roleIds.Contains(r.Id) && r.Name == "User")
+            //                                          .ToListAsync();
+
+            //    if(validRole != null)
+            //    {
+            //        EmployeeDTO employee = new EmployeeDTO()
+            //        {
+            //            Id = emp.Id,
+            //            FirstName = emp.FirstName,
+            //            LastName = emp.LastName,
+            //            Email = emp.Email,
+            //            PhoneNumber = emp.PhoneNumber,
+            //            Address = emp.Address,
+            //            userId = emp.UserId,
+            //            CreatedBy = emp.CreatedBy,
+            //            CreareAt = emp.CreatedAt,
+            //        };
+            //        empList.Add(employee);
+            //    }
+            //}
+            //return empList;
+
+            var hr = await (from emp in _dbContext.Employees
+                            join userRole in _dbContext.UserRoles
+                            on emp.UserId equals userRole.UserId
+                            join role in _dbContext.Roles
+                            on userRole.RoleId equals role.Id
+                            where emp.OrganizationId == organizationId
+                            && emp.IsDeleted == false
+                            && role.IsDeleted == false
+                            && userRole.IsDeleted == false
+                            && role.Name == "User"
+                            select new EmployeeDTO
+                            {
+                                Id = emp.Id,
+                                FirstName = emp.FirstName,
+                                LastName = emp.LastName,
+                                Email = emp.Email,
+                                PhoneNumber = emp.PhoneNumber,
+                                Address = emp.Address,
+                                userId = emp.UserId,
+                                CreatedBy = emp.CreatedBy,
+                                CreareAt = emp.CreatedAt,
+                            }).ToListAsync();
+
+            return hr;
         }
 
         public async Task<Employee> UpdateEmloyee(UpdateEmployeeDTO employeeDto, int employeeId, string createdBy, string reqRole)

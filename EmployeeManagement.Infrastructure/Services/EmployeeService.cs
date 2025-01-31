@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using EmployeeManagement.Application.DTO;
 using EmployeeManagement.Application.Interfaces.Repositories;
-
 using EmployeeManagement.Core.Entites;
 using EmployeeManagement.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
