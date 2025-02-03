@@ -1,10 +1,10 @@
-﻿using EmployeeManagement.Core.Entites;
-using EmployeeManagement.Infrastructure.Services;
+﻿
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using EmployeeManagement.WebAPI;
-using EmployeeManagement.Application.DTO;
+using EmployeeManagement.Core.DTO;
+using EmployeeManagement.Application.ServiceInterface;
 namespace EmployeeManagement.WebAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -12,10 +12,10 @@ namespace EmployeeManagement.WebAPI.Controllers
     [ValidateTokenPayloadActionFilter]
     public class AdminController : Controller
     {
-        private readonly AdminService _adminService;
-        private readonly EmployeeService _employeeService;
+        private readonly IAdminService _adminService;
+        private readonly IEmployeeService _employeeService;
 
-        public AdminController(AdminService adminService, EmployeeService employeeService)
+        public AdminController(IAdminService adminService, IEmployeeService employeeService)
         {
             _adminService = adminService;
             _employeeService = employeeService;
@@ -23,7 +23,7 @@ namespace EmployeeManagement.WebAPI.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost("CreateHr")]
         [ValidateTokenPayloadActionFilter]
-        public async Task<IActionResult> CreateHr(EmployeeDTO model)
+        public async Task<IActionResult> CreateHr(CreateEmployeeDTO model)
         {
             try
             {

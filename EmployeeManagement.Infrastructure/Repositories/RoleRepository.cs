@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using EmployeeManagement.Application.Interfaces.Repositories;
+using EmployeeManagement.Infrastructure.Interfaces.Repositories;
 using EmployeeManagement.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -48,36 +48,43 @@ namespace EmployeeManagement.Infrastructure.Repositories
                 {
                     return true;
                 }
-                throw new Exception("User can not be added to the role");
+                throw new Exception("User can not be added to the role" + result.Errors);
             }catch (Exception ex)
             {
-                throw new Exception("Error occured in adding role : " + ex.Message);
+                throw new Exception( "Excdption occured while adding user to the role       "+ ex);
             }
         }
 
         public async Task<bool> IsInRole(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if(user == null)
+            try
             {
-                throw new Exception("User not found");
-            }
-            if (user.IsDeleted)
-            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    throw new Exception("User not found");
+                }
+                if (user.IsDeleted)
+                {
+                    return false;
+                }
+                var roles = await _roleManager.FindByNameAsync(roleName);
+                if (roles == null)
+                {
+                    throw new Exception($"Role {roleName} not found");
+                }
+                var userRole = await _context.Set<ApplicationUserRoles>().FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roles.Id);
+                if (userRole != null && userRole.IsDeleted == false)
+                {
+                    return true;
+                }
+
                 return false;
             }
-            var roles = await _roleManager.FindByNameAsync(roleName);
-            if(roles == null)
+            catch(Exception ex)
             {
-                throw new Exception($"Role {roleName} not found");
+                throw new Exception("Error occured while checking user roles " + ex);
             }
-            var userRole = await _context.Set<ApplicationUserRoles>().FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roles.Id);
-            if(userRole != null && userRole.IsDeleted == false)
-            {
-                return true;
-            }
-
-            return false;
         }
 
         public async Task<bool> RemoveAllRoles(string userId)
@@ -124,7 +131,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception("Error occurred while removing roles: " + ex.Message);
+                throw new Exception("Error occurred while removing roles: " + ex);
             }
         }
 
@@ -154,7 +161,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception("Error occured in adding role : " + ex.Message);
+                throw new Exception("Error occured in adding role : " + ex);
             }
         }
 
@@ -165,51 +172,63 @@ namespace EmployeeManagement.Infrastructure.Repositories
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    throw new ArgumentException("User not found");
+                    throw new ArgumentException("User not found.");
                 }
-                var oldRoles = await _context.UserRoles.Where(ur => ur.UserId == userId && ur.IsDeleted == false).ToListAsync();
+
+                var oldRoles = await _context.UserRoles
+                                              .Where(ur => ur.UserId == userId)
+                                              .ToListAsync();
+
+                var newRoleEntity = await _roleManager.FindByNameAsync(newRole);
+                if (newRoleEntity == null)
+                {
+                    throw new Exception($"Role '{newRole}' not found.");
+                }
+
+                bool updated = false;
 
                 foreach (var oldRole in oldRoles)
                 {
                     var oldRoleEntity = await _roleManager.FindByIdAsync(oldRole.RoleId);
                     if (oldRoleEntity == null)
                     {
-                        throw new Exception($"Role {oldRole} not found");
+                        throw new Exception($"Role with ID {oldRole.RoleId} not found.");
                     }
-                    var userRole = await _context.UserRoles
-                                          .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == oldRoleEntity.Id);
-                    if (userRole != null)
+                    if (oldRoleEntity.Name == newRole && oldRole.IsDeleted)
                     {
-                        userRole.IsDeleted = true;
+                        oldRole.IsDeleted = false;
+                        updated = true;
                     }
                     else
                     {
-                        throw new Exception($"User-role association for '{oldRole}' not found.");
+                        oldRole.IsDeleted = true;
                     }
                 }
 
-                var newRoleEntity = await _roleManager.FindByNameAsync(newRole);
-
-                if (newRoleEntity == null)
+                if (!oldRoles.Any(ur => ur.RoleId == newRoleEntity.Id && !ur.IsDeleted))
                 {
-                    throw new Exception($"Role '{newRole}' not found.");
+                    var addResult = await _userManager.AddToRoleAsync(user, newRole);
+                    if (!addResult.Succeeded)
+                    {
+                        throw new Exception("Failed to add user to the new role.");
+                    }
+                    updated = true;
                 }
 
-                var addResult = await _userManager.AddToRoleAsync(user, newRole);
-                if (!addResult.Succeeded)
+                if (updated)
                 {
-                    throw new Exception("User cannot be added to the new role.");
+                    await _context.SaveChangesAsync();
+                    return true;
                 }
 
-                await _context.SaveChangesAsync();
-
-                return true;
+                return false;
             }
             catch (Exception ex)
             {
-                throw new Exception("Error occured in adding role : " + ex.Message);
+                throw new Exception("Error occurred while updating role: " + ex.Message, ex);
             }
         }
+
 
 
     }

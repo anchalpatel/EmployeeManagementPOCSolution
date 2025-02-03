@@ -1,8 +1,7 @@
 ﻿using System.Security.Claims;
-using EmployeeManagement.Application.DTO;
-using EmployeeManagement.Core.Entites;
+using EmployeeManagement.Application.ServiceInterface;
+using EmployeeManagement.Core.DTO;
 using EmployeeManagement.Infrastructure.Models;
-using EmployeeManagement.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +14,9 @@ namespace EmployeeManagement.WebAPI.Controllers
     public class OrganizationController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly OrganizationService _organizationService;
+        private readonly IOrganizationService _organizationService;
 
-        public OrganizationController(UserManager<ApplicationUser> userManager, OrganizationService organizationService)
+        public OrganizationController(UserManager<ApplicationUser> userManager, IOrganizationService organizationService)
         {
             _userManager = userManager;
             _organizationService = organizationService;
@@ -84,7 +83,7 @@ namespace EmployeeManagement.WebAPI.Controllers
         }
         [Authorize(Roles = "SuperAdmin")]
         [HttpPost("addAdmin/{organizationId}")]
-        public async Task<IActionResult> AddAdmin([FromBody]EmployeeDTO model, int organizationId)
+        public async Task<IActionResult> AddAdmin([FromBody]CreateEmployeeDTO model, int organizationId)
         {
             try
             {

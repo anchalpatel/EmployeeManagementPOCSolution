@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using EmployeeManagement.Application.Interfaces.Repositories;
+using EmployeeManagement.Infrastructure.Interfaces.Repositories;
 
 namespace EmployeeManagement.Infrastructure.Repositories
 {

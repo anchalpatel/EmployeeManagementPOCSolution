@@ -1,8 +1,8 @@
 using System.Text;
-using EmployeeManagement.Application.Interfaces.Repositories;
+using EmployeeManagement.Application.Services;
+using EmployeeManagement.Infrastructure.Interfaces.Repositories;
 using EmployeeManagement.Infrastructure.Models;
-using EmployeeManagement.Infrastructure.Repositories;
-using EmployeeManagement.Infrastructure.Services;
+
 using EmployeeManagement.WebAPI;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;

@@ -22,8 +22,10 @@ namespace EmployeeManagement.WebAPI
 
             try
             {
+
                 var handler = new JwtSecurityTokenHandler();
                 var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
+                string userId = null;
                 if (jwtToken == null)
                 {
                     context.Result = new BadRequestObjectResult(new { success = false, Message = "Invalid JWT Token" });
@@ -32,9 +34,10 @@ namespace EmployeeManagement.WebAPI
 
                 var claims = jwtToken.Claims.ToDictionary(c => c.Type, c => c.Value);
 
-                if (claims.TryGetValue("userId", out var userId))
+                if (claims.TryGetValue("userId", out var userIdClaim))
                 {
-                    var user = await _dbContext.Set<ApplicationUser>().FirstOrDefaultAsync(u => u.Id == userId && u.IsDeleted == false);
+                    userId = userIdClaim;
+                    var user = await _dbContext.Set<ApplicationUser>().FirstOrDefaultAsync(u => u.Id == userIdClaim && u.IsDeleted == false);
                     if (user == null)
                     {
                         context.Result = new BadRequestObjectResult(new { success = false, Message = "User not found" });
@@ -75,12 +78,23 @@ namespace EmployeeManagement.WebAPI
                             return;
                         }
 
+                        if(userId != null)
+                        {
+                            var userInOrg = await _dbContext.Employees.FirstOrDefaultAsync(e => e.UserId == userId && e.OrganizationId == organizationIdInt);
+                            if(userInOrg == null)
+                            {
+                                context.Result = new BadRequestObjectResult(new { success = false, Message = "User does not belongs to organization" });
+                                return;
+                            }
+
+                        }
                         if (claims.TryGetValue("OrganizationName", out string organizationName) && !string.Equals(organizationName, organization.Name, StringComparison.OrdinalIgnoreCase))
                         {
                             context.Result = new BadRequestObjectResult(new { success = false, Message = "Organization Name mismatch" });
                             return;
                         }
                     }
+
                 }
 
                 await next();

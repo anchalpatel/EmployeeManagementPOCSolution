@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EmployeeManagement.Application.DTO;
-using EmployeeManagement.Application.Interfaces.Repositories;
+﻿using EmployeeManagement.Core.DTO;
+using EmployeeManagement.Infrastructure.Interfaces.Repositories;
 using EmployeeManagement.Core.Entites;
 using EmployeeManagement.Infrastructure.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManagement.Infrastructure.Repositories
@@ -16,13 +10,12 @@ namespace EmployeeManagement.Infrastructure.Repositories
     {
         private readonly ApplicationDbContext _context;
         private readonly IRoleRepository _roleRepository;
-        private readonly UserManager<ApplicationUser> _userManager;
+       
 
-        public OrganizationRepository(ApplicationDbContext context, IRoleRepository roleRepository, UserManager<ApplicationUser> userManager)
+        public OrganizationRepository(ApplicationDbContext context, IRoleRepository roleRepository)
         {
             _context = context;
             _roleRepository = roleRepository;
-            _userManager = userManager;
         }
 
         //public async Task<Employee> AddAdmin(EmployeeDTO employeeDTO, int organizationId)
@@ -38,116 +31,186 @@ namespace EmployeeManagement.Infrastructure.Repositories
 
         public async Task<Organization> CreateOrganization(OrganizationDTO organizationDTO)
         {
-            var organization = new Organization()
+            try
             {
-                Name = organizationDTO.Name,
-                Address = organizationDTO.Address,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-            };
-            var result = await _context.Organizations.AddAsync(organization);
-            await _context.SaveChangesAsync();
-            return organization;
+                var organization = new Organization()
+                {
+                    Name = organizationDTO.Name,
+                    Address = organizationDTO.Address,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                };
+                var result = await _context.Organizations.AddAsync(organization);
+                if (result == null)
+                {
+                    throw new Exception("Organization can not be created");
+                }
+                await _context.SaveChangesAsync();
+                return organization;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occured while creating organization " + ex.Message);
+            }
         }
 
         public async Task<bool> DeleteOrganization(int organizationId)
         {
-            var organization = await _context.Organizations
+            try
+            {
+                var organization = await _context.Organizations
                 .FirstOrDefaultAsync(o => o.Id == organizationId && o.IsDeleted == false);
 
-            if (organization == null)
-            {
-                throw new ArgumentException("Organization does not exist or has already been deleted");
-            }
-
-            organization.IsDeleted = true;
-            var employees = await _context.Employees
-                .Where(e => e.OrganizationId == organization.Id && e.IsDeleted == false)
-                .ToListAsync();
-
-            foreach (var employee in employees)
-            {
-                employee.IsDeleted = true;
-
-                var removeUserFromAllRoles = await _roleRepository.RemoveAllRoles(employee.UserId);
-                if (!removeUserFromAllRoles)
+                if (organization == null)
                 {
-                    throw new Exception($"Employee {employee.FirstName} {employee.LastName} could not be removed from roles");
+                    throw new ArgumentException("Organization does not exist or has already been deleted");
                 }
-            }
 
-            await _context.SaveChangesAsync();
-            return true;
+                organization.IsDeleted = true;
+                var employees = await _context.Employees
+                    .Where(e => e.OrganizationId == organization.Id && e.IsDeleted == false)
+                    .ToListAsync();
+
+                foreach (var employee in employees)
+                {
+                    employee.IsDeleted = true;
+
+                    var removeUserFromAllRoles = await _roleRepository.RemoveAllRoles(employee.UserId);
+                    if (!removeUserFromAllRoles)
+                    {
+                        throw new Exception($"Employee {employee.FirstName} {employee.LastName} could not be removed from roles");
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occured while deleting organization " + ex.Message);
+            }
         }
 
 
         public async Task<OrganizationDTO> GetOrganizationsDetials(int organizationId)
         {
-            Organization organizationDetails = await _context.Organizations.Include(o => o.Employees).FirstOrDefaultAsync(o => o.Id == organizationId && o.IsDeleted == false);
-            List<EmployeeDTO> employees = new List<EmployeeDTO>();
-            foreach (var emp in organizationDetails.Employees)
+            try
             {
-                EmployeeDTO employee = new EmployeeDTO()
+                var organizationDetails = await (from org in _context.Organizations
+                                                 where org.IsDeleted == false
+                                                 && org.Id == organizationId
+                                                 join emp in _context.Employees
+                                                 on org.Id equals emp.OrganizationId into empGroup
+                                                 from emp in empGroup.DefaultIfEmpty()
+                                                 where emp == null || emp.IsDeleted == false
+                                                 select new { org, emp }).ToListAsync();
+
+                if (organizationDetails == null)
                 {
-                    FirstName = emp.FirstName,
-                    LastName = emp.LastName,
-                    Email = emp.Email,
-                    Id = emp.Id,
-                    CreatedBy = emp.CreatedBy
-                };
-                employees.Add(employee);
+                    throw new Exception("Organization not found");
+                }
+
+                var organizationDTO = organizationDetails
+                                     .GroupBy(x => x.org.Id)
+                                     .Select(group => new OrganizationDTO
+                                     {
+                                         Id = group.Key,
+                                         Name = group.FirstOrDefault().org.Name,
+                                         Address = group.FirstOrDefault().org.Address,
+                                         CreatedAt = group.FirstOrDefault().org.CreatedAt,
+                                         Employees = group.Where(x => x.emp != null).Select(x => new EmployeeDTO
+                                         {
+                                             Id = x.emp.Id,
+                                             FirstName = x.emp.FirstName,
+                                             LastName = x.emp.LastName,
+                                             Email = x.emp.Email,
+                                             CreatedBy = x.emp.CreatedBy,
+                                             OrganizationId = x.emp.OrganizationId,
+                                             CreareAt = x.emp.CreatedAt
+                                         }).ToList()
+                                     }).FirstOrDefault();
+
+                //List<EmployeeDTO> employees = new List<EmployeeDTO>();
+                //foreach (var emp in organizationDetails.Employees)
+                //{
+                //    employees.Add(new EmployeeDTO()
+                //    {
+                //        FirstName = emp.FirstName,
+                //        LastName = emp.LastName,
+                //        Email = emp.Email,
+                //        Id = emp.Id,
+                //        CreatedBy = emp.CreatedBy
+                //    });
+                //}
+
+                //return (new OrganizationDTO()
+                //{
+                //    Name = organizationDetails.Name,
+                //    Address = organizationDetails.Address,
+                //    CreatedAt = organizationDetails.CreatedAt,
+                //    Id = organizationDetails.Id,
+                //    Employees = employees
+                //}); ;
+                return organizationDTO;
             }
-            OrganizationDTO organization = new OrganizationDTO()
+            catch (Exception ex)
             {
-                Name = organizationDetails.Name,
-                Address = organizationDetails.Address,
-                CreatedAt = organizationDetails.CreatedAt,
-                Id = organizationDetails.Id,
-                Employees = employees
-            };
-            return organization;
+                throw new Exception("Error occured while fetching organization data " + ex.Message);
+            }
         }
 
         public async Task<List<Organization>> GetAllOrganizationDetails()
         {
-            List<Organization> organizationDetails = await _context.Organizations.Include(o => o.Employees).Where(o => o.IsDeleted == false).ToListAsync();
-            var organizationList = new List<Organization>();
-            foreach (var org in organizationDetails)
+            try
             {
-                var employees = new List<Employee>();
-                foreach(var emp in org.Employees)
-                {
-                    var newEmployee = new Employee()
-                    {
-                        Id = emp.Id,
-                        FirstName = emp.FirstName,
-                        LastName = emp.LastName,
-                        Email = emp.Email,
-                        Address = emp.Address,
-                        CreatedAt = emp.CreatedAt,
-                        PhoneNumber = emp.PhoneNumber,
-                        OrganizationId = emp.OrganizationId,
-                        UserId = emp.UserId,
-                        CreatedBy = emp.CreatedBy
-                    };
-                    employees.Add(newEmployee);
-                }
-                Organization newOrganization = new Organization()
-                {
-                    Id = org.Id,
-                    Name = org.Name,
-                    Address = org.Address,
-                    CreatedAt = org.CreatedAt,
-                    Employees = employees
-                };
-                organizationList.Add(newOrganization);
+                var organizationDetails = await (from org in _context.Organizations
+                                                 where org.IsDeleted == false
+                                                 join emp in _context.Employees
+                                                 on org.Id equals emp.OrganizationId into empGroup
+                                                 from emp in empGroup.DefaultIfEmpty() 
+                                                 where emp == null || emp.IsDeleted == false 
+                                                 select new { org, emp }).ToListAsync();
+
+                var orgList = organizationDetails
+                                .GroupBy(x => x.org.Id) 
+                                .Select(group => new Organization
+                                {
+                                    Id = group.Key,
+                                    Name = group.FirstOrDefault().org.Name,
+                                    Address = group.FirstOrDefault().org.Address,
+                                    CreatedAt = group.FirstOrDefault().org.CreatedAt,
+                                    Employees = group
+                                                .Where(x => x.emp != null) 
+                                                .Select(x => new Employee
+                                                {
+                                                    Id = x.emp.Id,
+                                                    FirstName = x.emp.FirstName,
+                                                    LastName = x.emp.LastName,
+                                                    Email = x.emp.Email,
+                                                    CreatedBy = x.emp.CreatedBy,
+                                                    OrganizationId = x.emp.OrganizationId,
+                                                    CreatedAt = x.emp.CreatedAt
+                                                }).ToList()
+                                }).ToList();
+
+                return orgList;
             }
-                return organizationList;
+            catch (Exception ex)
+            {
+                throw new Exception("Error occurred while fetching organization list: " + ex.Message);
+            }
         }
+
 
         public async Task<bool> IsOrganizationExisits(int organizationId)
         {
-            return await _context.Organizations.AnyAsync(o => o.Id == organizationId);
+            try
+            {
+                return await _context.Organizations.AnyAsync(o => o.Id == organizationId);
+            }
+            catch(Exception ex){
+                throw new Exception("Error occured while checking organization existance " + ex.Message);
+            }
         }
 
         public async Task<Organization> UpdateOrganization(OrganizationDTO organizationDTO, int organizationId)
@@ -171,34 +234,36 @@ namespace EmployeeManagement.Infrastructure.Repositories
 
         public async Task<List<EmployeeDTO>> GetAdmin(int organizationId)
         {
-            var employeeList = await _context.Employees.Where(e => e.OrganizationId == organizationId && e.IsDeleted == false).ToListAsync();
-            List<EmployeeDTO> adminList = new List<EmployeeDTO>();
-            foreach (var emp in employeeList)
+            try
             {
-                var user = await _userManager.FindByIdAsync(emp.UserId);
-                if(user == null)
-                {
-                    throw new Exception("User not founnd");
-                }
-                var roles = await _userManager.GetRolesAsync(user);
-                if (roles.Contains("Admin"))
-                {
-                    EmployeeDTO admin = new EmployeeDTO() {
-                        FirstName = emp.FirstName,
-                        LastName = emp.LastName,
-                        PhoneNumber = emp.PhoneNumber,
-                        userId = emp.UserId,
-                        Address = emp.Address,
-                        Email = emp.Email,
-                        CreareAt = emp.CreatedAt,
-                        CreatedBy = emp.CreatedBy,
-                        Id = emp.Id
-                    };
-                    adminList.Add(admin);
-                   
-                }
+                return await (from emp in _context.Employees
+                              join userRole in _context.UserRoles
+                              on emp.UserId equals userRole.UserId
+                              join role in _context.Roles
+                              on userRole.RoleId equals role.Id
+                              where emp.OrganizationId == organizationId
+                              && emp.IsDeleted == false
+                              && role.IsDeleted == false
+                              && userRole.IsDeleted == false
+                              && role.Name == "Admin"
+                              select new EmployeeDTO
+                              {
+                                  Id = emp.Id,
+                                  FirstName = emp.FirstName,
+                                  LastName = emp.LastName,
+                                  Email = emp.Email,
+                                  PhoneNumber = emp.PhoneNumber,
+                                  Address = emp.Address,
+                                  userId = emp.UserId,
+                                  CreatedBy = emp.CreatedBy,
+                                  CreareAt = emp.CreatedAt,
+                              }).ToListAsync();
+
             }
-            return adminList;
+            catch (Exception ex)
+            {
+                throw new Exception("Error occured while fetching admin list of organization " + ex.Message);
+            }
         }
     }
 }

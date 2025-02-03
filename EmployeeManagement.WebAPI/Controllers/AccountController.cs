@@ -1,5 +1,5 @@
-﻿using EmployeeManagement.Application.DTO;
-using EmployeeManagement.Infrastructure.Services;
+﻿using EmployeeManagement.Application.ServiceInterface;
+using EmployeeManagement.Core.DTO;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EmployeeManagement.WebAPI.Controllers
@@ -8,10 +8,10 @@ namespace EmployeeManagement.WebAPI.Controllers
     [ApiController]
     public class AccountController : Controller
     {
-        private readonly AuthService _authService;
+        private readonly IAuthService _authService;
         private readonly ILogger _logger;
 
-        public AccountController(AuthService authService, ILogger<AccountController> logger)
+        public AccountController(IAuthService authService, ILogger<AccountController> logger)
         {
             _authService = authService;
             _logger = logger;

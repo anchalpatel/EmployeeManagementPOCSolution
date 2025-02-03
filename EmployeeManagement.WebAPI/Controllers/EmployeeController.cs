@@ -1,25 +1,27 @@
 ﻿using System.Security.Claims;
-using EmployeeManagement.Application.DTO;
+using EmployeeManagement.Core.DTO;
 using EmployeeManagement.Core.Entites;
-using EmployeeManagement.Infrastructure.Services;
+using EmployeeManagement.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using EmployeeManagement.Application.ServiceInterface;
 
 namespace EmployeeManagement.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [ValidateTokenPayloadActionFilter]
     public class EmployeeController : Controller
     {
-        private readonly EmployeeService _employeeService;
+        private readonly IEmployeeService _employeeService;
 
-        public EmployeeController(EmployeeService employeeService)
+        public EmployeeController(IEmployeeService employeeService)
         {
             _employeeService = employeeService;
         }
         [HttpPost("CreateEmployee")]
         [Authorize(Roles = "Admin, HR")]
-        public async Task<IActionResult> CreateEmployee([FromBody] EmployeeDTO model)
+        public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeDTO model)
         {
             try
             {
@@ -152,7 +154,7 @@ namespace EmployeeManagement.WebAPI.Controllers
         }
         [HttpGet("GetAllHr")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAllr()
+        public async Task<IActionResult> GetAllHr()
         {
             try
             {

@@ -1,6 +1,6 @@
 ﻿
-using EmployeeManagement.Application.DTO;
-using EmployeeManagement.Application.Interfaces.Repositories;
+using EmployeeManagement.Core.DTO;
+using EmployeeManagement.Infrastructure.Interfaces.Repositories;
 
 using EmployeeManagement.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
@@ -23,125 +23,155 @@ namespace EmployeeManagement.Infrastructure.Repositories
         }
         public async Task<UserDTO> AuthenticateUserAsync(LoginModel loginDto)
         {
-            var user = await _userManager.FindByEmailAsync(loginDto.Email);
-            if(user != null && user.IsDeleted == false)
+            try
             {
-                var result = await _signInManager.PasswordSignInAsync(user, loginDto.Password, loginDto.RememberMe,false);
-
-                if(result.Succeeded)
+                var user = await _userManager.FindByEmailAsync(loginDto.Email);
+                if (user != null && user.IsDeleted == false)
                 {
-                    return new UserDTO
+                    var result = await _signInManager.PasswordSignInAsync(user, loginDto.Password, loginDto.RememberMe, false);
+
+                    if (result.Succeeded)
                     {
-                        UserId = user.Id,
-                        UserName = user.UserName,
-                        Email = user.Email
-                    };
+                        return new UserDTO
+                        {
+                            UserId = user.Id,
+                            UserName = user.UserName,
+                            Email = user.Email
+                        };
+                    }
                 }
+                return null;
             }
-            return null;
+            catch (Exception ex)
+            {
+                throw new Exception("Error occured while authenticating user " + ex.Message);
+            }
         }
 
         
         public async Task<bool> LogoutAsync()
         {
-           await _signInManager.SignOutAsync();
-            return true;
+            try
+            {
+                await _signInManager.SignOutAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occured while logginh out the user " + ex.Message);
+            }
         }
 
         public async Task<UserDTO> RegisterUserAsync(RegisterUser registerDto)
         {
-            var oldUser = await _userManager.FindByEmailAsync(registerDto.Email);
-            if(oldUser!= null)
+            try
             {
-                if(oldUser.IsDeleted == true)
+                var oldUser = await _userManager.FindByEmailAsync(registerDto.Email);
+                if (oldUser != null)
                 {
-                    oldUser.IsDeleted = false;
-                    oldUser.PasswordHash = registerDto.Password;
-                    oldUser.UserName = registerDto.Email;
-                    await _dbContext.SaveChangesAsync();
+                    if (oldUser.IsDeleted == true)
+                    {
+                        oldUser.IsDeleted = false;
+                        oldUser.PasswordHash = registerDto.Password;
+                        oldUser.UserName = registerDto.Email;
+                        await _dbContext.SaveChangesAsync();
+                    }
+                    return new UserDTO
+                    {
+                        UserId = oldUser.Id,
+                        UserName = oldUser.Email,
+                        Email = oldUser.Email,
+                    };
                 }
-                return new UserDTO
+
+                var user = new ApplicationUser()
                 {
-                    UserId = oldUser.Id,
-                    UserName = oldUser.Email,
-                    Email = oldUser.Email,
+                    UserName = registerDto.Email,
+                    Email = registerDto.Email,
                 };
-            }
-           
-            var user = new ApplicationUser()
-            {
-                UserName = registerDto.Email,
-                Email = registerDto.Email,
-            };
-            var result = await _userManager.CreateAsync(user, registerDto.Password);
-            if (result.Succeeded)
-            {
-                return new UserDTO
+                var result = await _userManager.CreateAsync(user, registerDto.Password);
+                if (result.Succeeded)
                 {
-                    UserId = user.Id,
-                    UserName = user.Email,
-                    Email = user.Email,
-                };
+                    return new UserDTO
+                    {
+                        UserId = user.Id,
+                        UserName = user.Email,
+                        Email = user.Email,
+                    };
+                }
+                else
+                {
+                    throw new Exception("User can not be created");
+                }
             }
-            return null;
+            catch(Exception ex)
+            {
+                throw new Exception("Error occured while registering the user " + ex.Message);
+            }
         }
 
         public async Task<bool> RemoveUserAsync(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-
-            if (user == null)
+            try
             {
-                throw new ArgumentException("User not found");
-            }
+                var user = await _userManager.FindByIdAsync(userId);
 
-            var removeRolesResults = await _roleRepository.RemoveAllRoles(userId);
-            if (removeRolesResults)
-            {
-                user.IsDeleted = true;
-
-                try
+                if (user == null)
                 {
+                    throw new ArgumentException("User not found");
+                }
+
+                var removeRolesResults = await _roleRepository.RemoveAllRoles(userId);
+                if (removeRolesResults)
+                {
+                    user.IsDeleted = true;
                     await _dbContext.SaveChangesAsync();
+                    return true;
                 }
-                catch (Exception ex)
+                else
                 {
-                    throw new Exception($"Error occurred while deleting user: {ex.Message}");
+                    throw new Exception($"User cannot be removed from roles");
                 }
-                return true;
             }
-            else
+            catch(Exception ex)
             {
-                throw new Exception($"User cannot be removed from roles");
+                throw new Exception("Error occured while deleting user " + ex.Message);
             }
         }
 
         public async Task<bool> UpdateEmail(string userId, string email)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
 
-            if (user == null)
-            {
-                throw new ArgumentException("User not found");
-            }
-            var isEmailExist = await _userManager.FindByEmailAsync(email);
-            if(isEmailExist == null)
-            {
-                user.Email = email;
-                user.UserName = email;
-                var result = await _userManager.UpdateAsync(user);
-                if (result.Succeeded)
+                if (user == null)
                 {
-                    return true;
+                    throw new ArgumentException("User not found");
+                }
+
+                if (await _userManager.FindByEmailAsync(email) == null)
+                {
+                    user.Email = email;
+                    user.UserName = email;
+                    var result = await _userManager.UpdateAsync(user);
+                    if (result.Succeeded)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        throw new Exception("Failed to update the user's email");
+                    }
                 }
                 else
                 {
-                    throw new Exception("Failed to update the user's email");
+                    throw new Exception($"User already exist with email {email}");
                 }
             }
-            else
+            catch(Exception ex)
             {
-                throw new Exception($"User already exist with email {email}");
+                throw new Exception("Error occured while updating user");
             }
         }
     }
