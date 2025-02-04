@@ -3,6 +3,7 @@ using EmployeeManagement.Infrastructure.Interfaces.Repositories;
 using EmployeeManagement.Core.Entites;
 using EmployeeManagement.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 
 namespace EmployeeManagement.Infrastructure.Repositories
 {
@@ -102,7 +103,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
                                                  join emp in _context.Employees
                                                  on org.Id equals emp.OrganizationId into empGroup
                                                  from emp in empGroup.DefaultIfEmpty()
-                                                 where emp == null || emp.IsDeleted == false
+                                                 where emp == null || emp.IsDeleted == false || emp.IsDeleted == true
                                                  select new { org, emp }).ToListAsync();
 
                 if (organizationDetails == null)
@@ -118,7 +119,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
                                          Name = group.FirstOrDefault().org.Name,
                                          Address = group.FirstOrDefault().org.Address,
                                          CreatedAt = group.FirstOrDefault().org.CreatedAt,
-                                         Employees = group.Where(x => x.emp != null).Select(x => new EmployeeDTO
+                                         Employees = group.Where(x => x.emp != null && x.emp.IsDeleted == false).Select(x => new EmployeeDTO
                                          {
                                              Id = x.emp.Id,
                                              FirstName = x.emp.FirstName,
@@ -130,27 +131,6 @@ namespace EmployeeManagement.Infrastructure.Repositories
                                          }).ToList()
                                      }).FirstOrDefault();
 
-                //List<EmployeeDTO> employees = new List<EmployeeDTO>();
-                //foreach (var emp in organizationDetails.Employees)
-                //{
-                //    employees.Add(new EmployeeDTO()
-                //    {
-                //        FirstName = emp.FirstName,
-                //        LastName = emp.LastName,
-                //        Email = emp.Email,
-                //        Id = emp.Id,
-                //        CreatedBy = emp.CreatedBy
-                //    });
-                //}
-
-                //return (new OrganizationDTO()
-                //{
-                //    Name = organizationDetails.Name,
-                //    Address = organizationDetails.Address,
-                //    CreatedAt = organizationDetails.CreatedAt,
-                //    Id = organizationDetails.Id,
-                //    Employees = employees
-                //}); ;
                 return organizationDTO;
             }
             catch (Exception ex)
@@ -164,15 +144,15 @@ namespace EmployeeManagement.Infrastructure.Repositories
             try
             {
                 var organizationDetails = await (from org in _context.Organizations
-                                                 where org.IsDeleted == false
+                                                 where org.IsDeleted == false  
                                                  join emp in _context.Employees
                                                  on org.Id equals emp.OrganizationId into empGroup
                                                  from emp in empGroup.DefaultIfEmpty() 
-                                                 where emp == null || emp.IsDeleted == false 
+                                                 where emp == null || emp.IsDeleted == false || emp.IsDeleted == true
                                                  select new { org, emp }).ToListAsync();
 
                 var orgList = organizationDetails
-                                .GroupBy(x => x.org.Id) 
+                                .GroupBy(x => x.org.Id)
                                 .Select(group => new Organization
                                 {
                                     Id = group.Key,
@@ -180,7 +160,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
                                     Address = group.FirstOrDefault().org.Address,
                                     CreatedAt = group.FirstOrDefault().org.CreatedAt,
                                     Employees = group
-                                                .Where(x => x.emp != null) 
+                                                .Where(x => x.emp != null && x.emp.IsDeleted == false) 
                                                 .Select(x => new Employee
                                                 {
                                                     Id = x.emp.Id,

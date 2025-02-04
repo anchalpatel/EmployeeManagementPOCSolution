@@ -1,7 +1,5 @@
 ﻿using System.Security.Claims;
 using EmployeeManagement.Core.DTO;
-using EmployeeManagement.Core.Entites;
-using EmployeeManagement.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using EmployeeManagement.Application.ServiceInterface;
@@ -30,7 +28,7 @@ namespace EmployeeManagement.WebAPI.Controllers
                 int organizationId = Convert.ToInt32(organizationIdStr);
                 if (userId == null || organizationId == null)
                 {
-                    return BadRequest("User Id or Organization Id not found");
+                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
                 }
 
                 var employee = await _employeeService.CreateEmployee(model, userId, organizationId);
@@ -38,11 +36,11 @@ namespace EmployeeManagement.WebAPI.Controllers
                 {
                     throw new Exception("Employee can not be created");
                 }
-                return Ok(new { Success = true, Mesaage = "Employee Created successfully", Data = employee });
+                return Ok(new ResponseDTO<object>{ Success = true, Message = "Employee Created successfully", Data = employee });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Success = false, Message = "Error occured while creating employee", Error = ex.Message });
+                return StatusCode(500, new ResponseDTO<object> { Success = false, Message = "Error occured while creating employee", Error = ex.Message });
             }
         }
         [HttpPut("UpdateEmployee/{employeeId}")]
@@ -56,19 +54,19 @@ namespace EmployeeManagement.WebAPI.Controllers
                 int organizationId = Convert.ToInt32(organizationIdStr);
                 if (userId == null || organizationId == null)
                 {
-                    return BadRequest("User Id or Organization Id not found");
+                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
                 }
 
                 var employee = await _employeeService.UpdateEmployee(model, employeeId, userId);
-                if (employee == null)
-                {
-                    throw new Exception("Employee can not be updated");
-                }
-                return Ok(new { Success = true, Mesaage = "Employee Updated successfully", Data = employee });
+                //if (employee == null)
+                //{
+                //    throw new Exception("Employee can not be updated");
+                //}
+                return Ok(new ResponseDTO<object> { Success = true, Message = "Employee Updated successfully", Data = employee });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Success = false, Message = "Error occured while updating employee", Error = ex.Message });
+                return StatusCode(500, new ResponseDTO<object> { Success = false, Message = "Error occured while updating employee", Error = ex.Message });
             }
         }
         [HttpDelete("DeleteEmployee/{employeeId}")]
@@ -82,19 +80,16 @@ namespace EmployeeManagement.WebAPI.Controllers
                 int organizationId = Convert.ToInt32(organizationIdStr);
                 if (userId == null || organizationId == null)
                 {
-                    return BadRequest("User Id or Organization Id not found");
+                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
                 }
 
                 var IsDeleted = await _employeeService.RemoveEmpoyee(employeeId, userId);
-                if (!IsDeleted)
-                {
-                    throw new Exception("Employee can not be deleted");
-                }
-                return Ok(new { Success = true, Mesaage = "Employee Deleted successfully" });
+               
+                return Ok(new ResponseDTO<object>{ Success = true, Message = "Employee Deleted successfully" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Success = false, Message = "Error occured while deleting employee", Error = ex.Message });
+                return StatusCode(500, new ResponseDTO<object>{ Success = false, Message = "Error occured while deleting employee", Error = ex.Message });
             }
         }
         [HttpGet("GetAllEmployee/{organizationId}")]
@@ -106,13 +101,13 @@ namespace EmployeeManagement.WebAPI.Controllers
                 IEnumerable<EmployeeDTO> employees = await _employeeService.GetAllEmployees(organizationId);
                 if (employees == null)
                 {
-                    return NotFound(new { Success = false, Message = "No employee found" });
+                    return NotFound(new ResponseDTO<object>{ Success = false, Message = "No employee found" });
                 }
-                return Ok(new { Success = true, Data = employees, Message = "Employees fetched successfully" });
+                return Ok(new ResponseDTO<object>{ Success = true, Data = employees, Message = "Employees fetched successfully" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Success = false, Message = "Employee list can not be fetched", Error = ex.Message });
+                return StatusCode(500, new ResponseDTO<object>{ Success = false, Message = "Employee list can not be fetched", Error = ex.Message });
             }
         }
 
@@ -123,11 +118,11 @@ namespace EmployeeManagement.WebAPI.Controllers
             try
             {
                 var employee = await _employeeService.GetEmployeeDetail(employeeId);
-                return Ok(new { Success = true, Message = "Employee details fetched successfully", Data = employee });
+                return Ok(new ResponseDTO<object>{ Success = true, Message = "Employee details fetched successfully", Data = employee });
             }
             catch(Exception ex)
             {
-                return StatusCode(500, new { Success = false, Message = "Employee can not be fetched" + ex.Message, Error = ex.Message });
+                return StatusCode(500, new ResponseDTO<object> { Success = false, Message = "Employee can not be fetched" + ex.Message, Error = ex.Message });
             }
         }
 
@@ -142,14 +137,15 @@ namespace EmployeeManagement.WebAPI.Controllers
                 int organizationId = Convert.ToInt32(organizationIdStr);
                 if (userId == null || organizationId == null)
                 {
-                    return BadRequest("User Id or Organization Id not found");
+                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
+
                 }
                 var employees = await _employeeService.GetEmployeeCreatedByUser(userId, organizationId);
-                return Ok(new { Success = true, Message = "Employee details fetched successfully", Data = employees });
+                return Ok(new ResponseDTO<object>{ Success = true, Message = "Employee details fetched successfully", Data = employees });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Success = false, Message = "Employee can not be fetched", Error = ex.Message });
+                return StatusCode(500, new ResponseDTO<object>{ Success = false, Message = "Employee can not be fetched", Error = ex.Message });
             }
         }
         [HttpGet("GetAllHr")]
@@ -163,14 +159,15 @@ namespace EmployeeManagement.WebAPI.Controllers
                 int organizationId = Convert.ToInt32(organizationIdStr);
                 if (userId == null || organizationId == null)
                 {
-                    return BadRequest("User Id or Organization Id not found");
+                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
+
                 }
                 var hrList = await _employeeService.GetHrList(organizationId, userId);
-                return Ok(new { Success = true, Message = "Hr details fetched successfully", Data = hrList });
+                return Ok(new ResponseDTO<object>{ Success = true, Message = "Hr details fetched successfully", Data = hrList });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Success = false, Message = "Employee can not be fetched", Error = ex.Message });
+                return StatusCode(500, new ResponseDTO<object>{ Success = false, Message = "Employee can not be fetched", Error = ex.Message });
             }
         }
         [HttpGet("GetEmployeeInUserRole")]
@@ -184,14 +181,14 @@ namespace EmployeeManagement.WebAPI.Controllers
                 int organizationId = Convert.ToInt32(organizationIdStr);
                 if (userId == null || organizationId == null)
                 {
-                    return BadRequest("User Id or Organization Id not found");
+                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
                 }
                 var empList = await _employeeService.GetEmployeeInUserRole(organizationId, userId);
-                return Ok(new { Success = true, Message = "Hr details fetched successfully", Data = empList });
+                return Ok(new ResponseDTO<object>{ Success = true, Message = "Hr details fetched successfully", Data = empList });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Success = false, Message = "Employee can not be fetched", Error = ex.Message });
+                return StatusCode(500, new ResponseDTO<object> { Success = false, Message = "Employee can not be fetched", Error = ex.Message });
             }
         }
     }

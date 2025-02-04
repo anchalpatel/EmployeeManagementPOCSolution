@@ -66,23 +66,23 @@ namespace EmployeeManagement.Infrastructure.Repositories
         {
             try
             {
-                var oldUser = await _userManager.FindByEmailAsync(registerDto.Email);
-                if (oldUser != null)
-                {
-                    if (oldUser.IsDeleted == true)
-                    {
-                        oldUser.IsDeleted = false;
-                        oldUser.PasswordHash = registerDto.Password;
-                        oldUser.UserName = registerDto.Email;
-                        await _dbContext.SaveChangesAsync();
-                    }
-                    return new UserDTO
-                    {
-                        UserId = oldUser.Id,
-                        UserName = oldUser.Email,
-                        Email = oldUser.Email,
-                    };
-                }
+                //var oldUser = await _userManager.FindByEmailAsync(registerDto.Email);
+                //if (oldUser != null)
+                //{
+                //    if (oldUser.IsDeleted == true)
+                //    {
+                //        oldUser.IsDeleted = false;
+                //        oldUser.PasswordHash = registerDto.Password;
+                //        oldUser.UserName = registerDto.Email;
+                //        await _dbContext.SaveChangesAsync();
+                //    }
+                //    return new UserDTO
+                //    {
+                //        UserId = oldUser.Id,
+                //        UserName = oldUser.Email,
+                //        Email = oldUser.Email,
+                //    };
+                //}
 
                 var user = new ApplicationUser()
                 {

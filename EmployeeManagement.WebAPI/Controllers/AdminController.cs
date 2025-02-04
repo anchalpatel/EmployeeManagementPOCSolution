@@ -36,22 +36,23 @@ namespace EmployeeManagement.WebAPI.Controllers
 
                 if (userId == null || organizationId == null)
                 {
-                    return Unauthorized("user id or organization id not found in token");
+                    return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id or organization id not found in token" });
+
                 }
                 var hr = await _adminService.CreateHr(model, userId, Convert.ToInt32(organizationId));
-                return Ok(new { success = true, Data = hr, Message = "Hr Created successfully" });
+                return Ok(new ResponseDTO<object>{ Success = true, Data = hr, Message = "Hr Created successfully" });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(ex.Message);
+                return Unauthorized(new ResponseDTO<object> { Success = false, Message="Anauthorized", Error = ex.ToString()});
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new ResponseDTO<object> { Success = false, Message = "Invalid Parameters", Error = ex.ToString() });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An unexpected error occurred", details = ex.Message });
+                return StatusCode(500, new ResponseDTO<object>{ Success = false, Message = "An unexpected error occurred", Error = ex.Message });
             }
         }
         [HttpDelete("RemoveHr/{employeeId}")]
@@ -69,22 +70,24 @@ namespace EmployeeManagement.WebAPI.Controllers
 
                 if (userId == null)
                 {
-                    return Unauthorized("user id not found in token");
+                    return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
+
                 }
                 bool isDeleted = await _adminService.RemoveHr(employeeId, userId);
-                return Ok(new { success = true, Message = "Hr Deleted successfully" });
+                return Ok(new ResponseDTO<object>{ Success = true, Message = "Hr Deleted successfully" });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(ex.Message);
+                return Unauthorized(new ResponseDTO<object> { Success = false, Message = "Unauthorized", Error = ex.ToString() });
+
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An unexpected error occurred", details = ex.Message });
+                return StatusCode(500, new ResponseDTO<object>{ Success = false, Message = "An unexpected error occurred", Error = ex.Message });
             }
         }
 
@@ -100,22 +103,22 @@ namespace EmployeeManagement.WebAPI.Controllers
 
                 if (userId == null)
                 {
-                    return Unauthorized("user id not found in token");
+                    return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
                 }
                 var hrList = await _employeeService.GetHrList(organizationId, userId);
-                return Ok(new { success = true, Message = "Hr Deleted successfully" , Data = hrList});
+                return Ok(new ResponseDTO<object>{ Success = true, Message = "Hr Deleted successfully" , Data = hrList});
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(ex.Message);
+                return Unauthorized(new ResponseDTO<object> { Success = false, Message = "Unauthorized", Error = ex.ToString() });
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An unexpected error occurred", details = ex.Message });
+                return StatusCode(500, new ResponseDTO<object>{ Success = false, Message = "An unexpected error occurred", Error = ex.ToString() });
             }
         }
     }

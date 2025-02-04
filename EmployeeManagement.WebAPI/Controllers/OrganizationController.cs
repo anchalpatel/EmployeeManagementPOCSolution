@@ -32,20 +32,20 @@ namespace EmployeeManagement.WebAPI.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
             {
-                return Unauthorized("User id not found in token");
+                return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
             }
 
             try
             {
                 var organization = await _organizationService.CreateOrganization(model, userId);
-                return Ok(new { success = true, message = "Organization created successfully", Data = organization });
+                return Ok(new ResponseDTO<object>{ Success = true, Message = "Organization created successfully", Data = organization });
             }catch(UnauthorizedAccessException ex)
             {
                 return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An unexpected error occurred", details = ex.Message });
+                return StatusCode(500, new ResponseDTO<object>{ Message = "An unexpected error occurred", Error = ex.Message });
             }
         }
 
@@ -60,19 +60,19 @@ namespace EmployeeManagement.WebAPI.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
             {
-                return Unauthorized("User id not found in token");
+                return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
             }
 
             try
             {
                 var organization = await _organizationService.UpdateOrganization(model, organizationId, userId);
-                return Ok(new { success = true, message = "Organization created successfully", Data = organization });
+                return Ok(new ResponseDTO<object>{ Success = true, Message = "Organization created successfully", Data = organization });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(ex.Message);
+                return Unauthorized(new ResponseDTO<object> { Success = false, Message = "UnAuthorized", Error = ex.ToString() });
             }
-            catch(ArgumentException ex)
+            catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
