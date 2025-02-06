@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Configuration;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Mvc;
+using EmployeeManagement.MVCFramework.Models;
 using EmployeeManagement.MVCFramework.Models.View_Model;
 
 namespace EmployeeManagement.MVCFramework.Controllers
@@ -15,7 +17,7 @@ namespace EmployeeManagement.MVCFramework.Controllers
         public AccountController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("https://localhost:7057/");
+            _httpClient.BaseAddress = new Uri(ConfigurationManager.ConnectionStrings["ServerConnectionString"].ConnectionString);
             
         }
         public ActionResult Login()
@@ -33,7 +35,7 @@ namespace EmployeeManagement.MVCFramework.Controllers
                 
                 if (response.IsSuccessStatusCode)
                 {
-                    var token = response.Content.ReadAsAsync<dynamic>().Result.token;
+                    var token = response.Content.ReadAsAsync<AuthApiResponse>().Result.Token;
                     Session["AuthToken"] = token;
                     Console.WriteLine("TOKEN INSIDE SESSION ---> " + token);
                     return RedirectToAction("Index", "Home");
@@ -59,7 +61,7 @@ namespace EmployeeManagement.MVCFramework.Controllers
                 var response = await _httpClient.PostAsJsonAsync("api/account/register", registerObj);
                 if (response.IsSuccessStatusCode)
                 {
-                    var token = response.Content.ReadAsAsync<dynamic>().Result.Token;
+                    var token = response.Content.ReadAsAsync<AuthApiResponse>().Result.Token;
                     Session["AuthToken"] = token;
                     return RedirectToAction("Index", "Home");
                 }

@@ -116,10 +116,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
             {
                 var user = await _userManager.FindByIdAsync(userId);
 
-                if (user == null)
-                {
-                    throw new ArgumentException("User not found");
-                }
+                if (user == null) throw new ArgumentException("User not found");
 
                 var removeRolesResults = await _roleRepository.RemoveAllRoles(userId);
                 if (removeRolesResults)
@@ -145,10 +142,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
             {
                 var user = await _userManager.FindByIdAsync(userId);
 
-                if (user == null)
-                {
-                    throw new ArgumentException("User not found");
-                }
+                if (user == null) throw new ArgumentException("User not found");
 
                 if (await _userManager.FindByEmailAsync(email) == null)
                 {

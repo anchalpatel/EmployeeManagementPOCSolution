@@ -25,16 +25,10 @@ namespace EmployeeManagement.WebAPI.Controllers
         [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> CreateOrganization([FromBody]OrganizationDTO model)
         {
-            if (!ModelState.IsValid)
-            {
-                throw new Exception("Please enter valid data");
-            }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
-            }
+            if (!ModelState.IsValid) throw new Exception("Please enter valid data");
 
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
             try
             {
                 var organization = await _organizationService.CreateOrganization(model, userId);
@@ -53,15 +47,10 @@ namespace EmployeeManagement.WebAPI.Controllers
         [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> UpdateOrganization([FromBody] OrganizationDTO model, int organizationId)
         {
-            if (!ModelState.IsValid)
-            {
-                throw new Exception("Please enter valid data");
-            }
+            if (!ModelState.IsValid) return BadRequest(new ResponseDTO<object> { Success = false, Message = "Invalid parameters" });
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
-            }
+            if (userId == null) return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
 
             try
             {
@@ -74,7 +63,7 @@ namespace EmployeeManagement.WebAPI.Controllers
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new ResponseDTO<object> { Success = false, Error = ex.ToString() });
             }
             catch (Exception ex)
             {
@@ -87,15 +76,10 @@ namespace EmployeeManagement.WebAPI.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    throw new Exception("Please enter valid data");
-                }
+                if (!ModelState.IsValid) throw new Exception("Please enter valid data");
+
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (userId == null)
-                {
-                    return Unauthorized("user id not found in token");
-                }
+                if (userId == null) return Unauthorized("user id not found in token");
                 var admin = await _organizationService.AddAdmin(model, userId, organizationId);
                 return Ok(new { success = true, Data =  admin, Message = "Admin Created successfully" });
             }
@@ -121,10 +105,8 @@ namespace EmployeeManagement.WebAPI.Controllers
             {
               
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (userId == null)
-                {
-                    return Unauthorized("user id not found in token");
-                }
+                if (userId == null) return Unauthorized("user id not found in token");
+
                 var superAdmin = await _organizationService.RemoveAdmin(employeeId, userId);
                 return Ok(new { success = true, Data = superAdmin, Message = "Admin Removed successfully" });
             }
@@ -148,10 +130,7 @@ namespace EmployeeManagement.WebAPI.Controllers
             try
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (userId == null)
-                {
-                    return Unauthorized("user id not found in token");
-                }
+                if (userId == null) return Unauthorized("user id not found in token");
             
                 var organization = _organizationService.GetOrganizationAsync(organizationId);
                 return Ok(new { success = true, Message = "Organization data fetched successfully", Data = organization});
@@ -168,11 +147,8 @@ namespace EmployeeManagement.WebAPI.Controllers
             try
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (userId == null)
-                {
-                    return Unauthorized("user id not found in token");
-                }
-               
+                if (userId == null) return Unauthorized("user id not found in token");
+
                 var organization = _organizationService.GetAllOrganizationData();
                 return Ok(new { success = true, Message = "Organization data fetched successfully", Data = organization });
             }
@@ -189,15 +165,11 @@ namespace EmployeeManagement.WebAPI.Controllers
             try
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (userId == null)
-                {
-                    return Unauthorized("user id not found in token");
-                }
+                if (userId == null) return Unauthorized("user id not found in token");
+
                 bool IsDeleted = await _organizationService.DeleteOrganization(organizationId, userId);
-                if (IsDeleted)
-                {
-                    return Ok(new { Success = true, Message = "Organization deleted successfully" });
-                }
+                if (IsDeleted) return Ok(new { Success = true, Message = "Organization deleted successfully" });
+
                 throw new Exception("Error occured while deleting employee");
             }
             catch(Exception ex)
@@ -212,10 +184,8 @@ namespace EmployeeManagement.WebAPI.Controllers
             try
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (userId == null)
-                {
-                    return Unauthorized("User id not found in token");
-                }
+                if (userId == null) return Unauthorized("User id not found in token");
+
                 var admin = await _organizationService.GetAdmin(organizationId);
                 return Ok(new { Success = true, Message = "Admin fetched successfully", Data = admin });
             }

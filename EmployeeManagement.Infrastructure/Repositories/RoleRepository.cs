@@ -27,15 +27,11 @@ namespace EmployeeManagement.Infrastructure.Repositories
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if(user == null)
-                {
-                    throw new ArgumentException("User not found");
-                }
+                if(user == null) throw new ArgumentException("User not found");
+
                 var role = await _roleManager.FindByNameAsync(roleName);
-                if(role == null)
-                {
-                    throw new Exception("Role not found");
-                }
+                if(role == null) throw new Exception("Role not found");
+
                 var userRole = await _context.Set<ApplicationUserRoles>().FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == role.Id && ur.IsDeleted == true);
                 if(userRole != null)
                 {
@@ -60,24 +56,15 @@ namespace EmployeeManagement.Infrastructure.Repositories
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                {
-                    throw new Exception("User not found");
-                }
-                if (user.IsDeleted)
-                {
-                    return false;
-                }
+                if (user == null) throw new Exception("User not found");
+
+                if (user.IsDeleted) return false;
+
                 var roles = await _roleManager.FindByNameAsync(roleName);
-                if (roles == null)
-                {
-                    throw new Exception($"Role {roleName} not found");
-                }
+                if (roles == null) throw new Exception($"Role {roleName} not found");
+
                 var userRole = await _context.Set<ApplicationUserRoles>().FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roles.Id);
-                if (userRole != null && userRole.IsDeleted == false)
-                {
-                    return true;
-                }
+                if (userRole != null && userRole.IsDeleted == false) return true;
 
                 return false;
             }
@@ -92,10 +79,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                {
-                    throw new ArgumentException("User not found");
-                }
+                if (user == null) throw new ArgumentException("User not found");
 
                 var roles = await _userManager.GetRolesAsync(user);
 
@@ -170,30 +154,22 @@ namespace EmployeeManagement.Infrastructure.Repositories
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                {
-                    throw new ArgumentException("User not found.");
-                }
+                if (user == null) throw new ArgumentException("User not found.");
 
                 var oldRoles = await _context.UserRoles
                                               .Where(ur => ur.UserId == userId)
                                               .ToListAsync();
 
                 var newRoleEntity = await _roleManager.FindByNameAsync(newRole);
-                if (newRoleEntity == null)
-                {
-                    throw new Exception($"Role '{newRole}' not found.");
-                }
+                if (newRoleEntity == null) throw new Exception($"Role '{newRole}' not found.");
 
                 bool updated = false;
 
                 foreach (var oldRole in oldRoles)
                 {
                     var oldRoleEntity = await _roleManager.FindByIdAsync(oldRole.RoleId);
-                    if (oldRoleEntity == null)
-                    {
-                        throw new Exception($"Role with ID {oldRole.RoleId} not found.");
-                    }
+                    if (oldRoleEntity == null) throw new Exception($"Role with ID {oldRole.RoleId} not found.");
+
                     if (oldRoleEntity.Name == newRole && oldRole.IsDeleted)
                     {
                         oldRole.IsDeleted = false;
@@ -208,10 +184,8 @@ namespace EmployeeManagement.Infrastructure.Repositories
                 if (!oldRoles.Any(ur => ur.RoleId == newRoleEntity.Id && !ur.IsDeleted))
                 {
                     var addResult = await _userManager.AddToRoleAsync(user, newRole);
-                    if (!addResult.Succeeded)
-                    {
-                        throw new Exception("Failed to add user to the new role.");
-                    }
+                    if (!addResult.Succeeded) throw new Exception("Failed to add user to the new role.");
+
                     updated = true;
                 }
 

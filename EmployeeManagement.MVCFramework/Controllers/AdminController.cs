@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -7,12 +8,14 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using EmployeeManagement.MVCFramework.CustomAttributes;
 using EmployeeManagement.MVCFramework.Models;
 using EmployeeManagement.MVCFramework.Models.View_Model;
 using Newtonsoft.Json;
 
 namespace EmployeeManagement.MVCFramework.Controllers
 {
+    [TokenValidation]
     public class AdminController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -20,17 +23,15 @@ namespace EmployeeManagement.MVCFramework.Controllers
         public AdminController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("https://localhost:7057/");
+            _httpClient.BaseAddress = new Uri(ConfigurationManager.ConnectionStrings["ServerConnectionString"].ConnectionString);
 
         }
         [HttpGet]
+      
         public async Task<ActionResult> ManageAdmin(int organizationId, string organizationName)
         {
             var token = Session["AuthToken"]?.ToString();
-            if (token == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+           // if (token == null) return RedirectToAction("Login", "Account");
 
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -75,6 +76,7 @@ namespace EmployeeManagement.MVCFramework.Controllers
         }
 
         [HttpGet]
+   
         public ActionResult CreateAdmin(int organizationId)
         {
             ViewBag.OrganizationId = organizationId;
@@ -83,19 +85,14 @@ namespace EmployeeManagement.MVCFramework.Controllers
         [HttpPost]
         public async Task<ActionResult> CreateAdmin(EmployeeViewModel model, int organizationId)
         {
-            if (model.Password == null)
-            {
-                ModelState.AddModelError("", "Paswword is required");
-            }
+            if (model.Password == null) ModelState.AddModelError("", "Paswword is required");
+
             if (ModelState.IsValid)
             {
                
                 var token = Session["AuthToken"]?.ToString();
-                if (token == null)
-                {
-                    return RedirectToAction("Login", "Account");
-                }
-
+                //if (token == null) return RedirectToAction("Login", "Account");
+              
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 var jsonData = JsonContent.Create(model);
                 var response = await _httpClient.PostAsync($"api/Organization/addAdmin/{organizationId}", jsonData);
@@ -117,14 +114,12 @@ namespace EmployeeManagement.MVCFramework.Controllers
             }
             return View(model);
         }
-
+      
         public async Task<ActionResult> DeleteAdmin(int employeeId, int organizationId)
         {
             var token = Session["AuthToken"]?.ToString();
-            if (token == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            //if (token == null) return RedirectToAction("Login", "Account");
+
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             
             var response = await _httpClient.DeleteAsync($"api/Organization/removeAdmin/{employeeId}");
@@ -154,10 +149,7 @@ namespace EmployeeManagement.MVCFramework.Controllers
         public async Task<ActionResult> UpdateAdmin(int employeeId, int organizationId)
         {
             var token = Session["AuthToken"]?.ToString();
-            if (token == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            //if (token == null) return RedirectToAction("Login", "Account");
 
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -206,10 +198,10 @@ namespace EmployeeManagement.MVCFramework.Controllers
             if (ModelState.IsValid)
             {
                 var token = Session["AuthToken"]?.ToString();
-                if (token == null)
-                {
-                    return RedirectToAction("Login", "Account");
-                }
+                //if (token == null)
+                //{
+                //    return RedirectToAction("Login", "Account");
+                //}
 
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 

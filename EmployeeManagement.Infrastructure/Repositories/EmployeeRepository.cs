@@ -30,23 +30,9 @@ namespace EmployeeManagement.Infrastructure.Repositories
         {
             try
             {
-                var emp = await _dbContext.Employees.FirstOrDefaultAsync(u => u.Email == model.Email && u.IsDeleted == true);
-                if (emp != null)
-                {
-                    emp.IsDeleted = false;
-                    emp.FirstName = model.FirstName;
-                    emp.LastName = model.LastName;
-                    emp.Email = model.Email;
-                    emp.OrganizationId = organizationId;
-                    emp.Address = model.Address;
-                    emp.UserId = model.userId;
-                    emp.PhoneNumber = model.PhoneNumber;
-                    emp.CreatedBy = createdBy;
-                    emp.CreatedAt = DateTime.UtcNow;
-                    emp.UpdatedAt = DateTime.UtcNow;
-                    await _dbContext.SaveChangesAsync();
-                    return emp;
-                }
+                var emp = await _dbContext.Employees.FirstOrDefaultAsync(u => u.Email == model.Email);
+                if (emp != null) throw new Exception("Employee already exists");
+
                 var employee = new Employee()
                 {
                     FirstName = model.FirstName,
@@ -62,10 +48,8 @@ namespace EmployeeManagement.Infrastructure.Repositories
                 };
 
                 var newEmployee = await _dbContext.Employees.AddAsync(employee);
-                if(newEmployee == null)
-                {
-                    throw new Exception("Employee cannot be created");
-                }
+                if(newEmployee == null) throw new Exception("Employee cannot be created");
+
                 await _dbContext.SaveChangesAsync();
                 return employee;
             }
@@ -80,10 +64,8 @@ namespace EmployeeManagement.Infrastructure.Repositories
             try
             {
                 var employee = await _dbContext.Employees.FirstOrDefaultAsync(e => e.Id == employeeId && e.IsDeleted == false);
-                if (employee == null)
-                {
-                    throw new ArgumentException("Employee with id " + employeeId + " not found");
-                }
+                if (employee == null) throw new ArgumentException("Employee with id " + employeeId + " not found");
+
                 employee.IsDeleted = true;
                 await _dbContext.SaveChangesAsync();
                 return true;
@@ -135,9 +117,8 @@ namespace EmployeeManagement.Infrastructure.Repositories
             {
                 var emp = await _dbContext.Employees.FirstOrDefaultAsync(e => e.UserId == userId && e.IsDeleted == false);
                 if (emp == null && !(await _userManager.IsInRoleAsync(await _userManager.FindByIdAsync(userId),"SuperAdmin")))
-                {
                     throw new Exception("Employee not found");
-                }
+
                 return emp;
             }
             catch(Exception ex)
@@ -185,10 +166,8 @@ namespace EmployeeManagement.Infrastructure.Repositories
                                           CreareAt = empRoles.Key.CreatedAt,
                                           Roles = empRoles.ToList()
                                       }).FirstOrDefaultAsync();
-                if (employee == null)
-                {
-                    throw new Exception("Employee Not Found");
-                }
+                if (employee == null) throw new Exception("Employee Not Found");
+
                 return employee;
             }
             catch(Exception ex)
@@ -298,10 +277,8 @@ namespace EmployeeManagement.Infrastructure.Repositories
             try
             {
                 var employee = await _dbContext.Employees.FirstOrDefaultAsync(emp => emp.Id == employeeId && emp.IsDeleted == false);
-                if (employee == null)
-                {
-                    throw new Exception("Requested employee not found");
-                }
+                if (employee == null) throw new Exception("Requested employee not found");
+
                 var empUser = await _userManager.FindByIdAsync(employee.UserId);
                 var empRole = await _userManager.GetRolesAsync(empUser);
 
@@ -316,44 +293,33 @@ namespace EmployeeManagement.Infrastructure.Repositories
                                                       .ToListAsync();
 
                 var validRoles = empRole.Where(role => validRoleNames.Contains(role)).ToList();
-                if (validRoles.Contains("Admin") && reqRole != "SuperAdmin")
-                {
-                    throw new Exception("Only Super admin can edit admin");
-                }
-                if (validRoles.Contains("HR") && reqRole != "Admin")
-                {
-                    throw new Exception("Only admin can edit HR");
-                }
+                if (validRoles.Contains("Admin") && reqRole != "SuperAdmin") throw new Exception("Only Super admin can edit admin");
+
+                if (validRoles.Contains("HR") && reqRole != "Admin") throw new Exception("Only admin can edit HR");
 
                 if (validRoles.Contains("User") && (!(reqRole == "Admin") && (!(reqRole == "HR" && employee.CreatedBy == createdBy))))
-                {
                     throw new Exception("You cannot update an employee that you have not created.");
-                }
+                
 
                 if (employeeDto.FirstName != null && employeeDto.FirstName != employee.FirstName) employee.FirstName = employeeDto.FirstName;
                 if (employeeDto.LastName != null && employeeDto.LastName != employee.LastName) employee.LastName = employeeDto.LastName;
                 if (employeeDto.Email != null && employeeDto.Email != employee.Email)
                 {
                     bool userUpdate = await _userRepository.UpdateEmail(employee.UserId, employeeDto.Email);
-                    if (!userUpdate)
-                    {
-                        throw new Exception("Email can not be updated");
-                    }
+                    if (!userUpdate) throw new Exception("Email can not be updated");
+
                     employee.Email = employeeDto.Email;
                 }
                 if (employeeDto.Address != null && employeeDto.Address != employee.Address) employee.Address = employeeDto.Address;
                 if (employeeDto.PhoneNumber != null && employeeDto.PhoneNumber != employee.PhoneNumber) employee.PhoneNumber = employeeDto.PhoneNumber;
                 if (employeeDto.Roles != null && !validRoles.Contains(employeeDto.Roles))
                 {
-                    if (reqRole != "Admin")
-                    {
-                        throw new Exception("Only Admins can change employee roles.");
-                    }
+                    if (reqRole != "Admin") throw new Exception("Only Admins can change employee roles.");
+
 
                     if (!await _roleRepository.UpdateRole(employee.UserId, employeeDto.Roles))
-                    {
                         throw new Exception("Employee role cannot be updated");
-                    }
+                    
 
                 }
                 employee.UpdatedAt = DateTime.UtcNow;

@@ -36,10 +36,8 @@ namespace EmployeeManagement.Application.Services
                     throw new Exception("UserId and Organizaion id is required");
                 }
                 var user = await _userManager.FindByIdAsync(userId);
-                if(user == null)
-                {
-                    throw new ArgumentException("User not found");
-                }
+                if(user == null) throw new ArgumentException("User not found");
+
                 
                 var newUser = await _userRepository.RegisterUserAsync(new RegisterUser()
                 {
@@ -73,27 +71,16 @@ namespace EmployeeManagement.Application.Services
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                {
-                    throw new UnauthorizedAccessException("User not found");
-                }
+                if (user == null) throw new UnauthorizedAccessException("User not found");
 
                 var emp = await _dbContext.Employees.FirstOrDefaultAsync(emp => emp.Id == employeeId && emp.IsDeleted == false);
                 var empUserId = emp.UserId;
-                if(emp.CreatedBy != userId)
-                {
-                    throw new UnauthorizedAccessException("You can delete only those employee whome you have created");
-                }
-               
-                if (!await _employeeRepository.DeleteEmployee(employeeId))
-                {
-                    throw new Exception("Employe can not be deleted");
-                }
-                
-                if (!await _userRepository.RemoveUserAsync(empUserId))
-                {
-                    throw new Exception("User can not be deleted");
-                }
+                if(emp.CreatedBy != userId) throw new UnauthorizedAccessException("You can delete only those employee whome you have created");
+
+                if (!await _employeeRepository.DeleteEmployee(employeeId)) throw new Exception("Employe can not be deleted");
+
+                if (!await _userRepository.RemoveUserAsync(empUserId)) throw new Exception("User can not be deleted");
+
                 return true;
 
             }
@@ -107,15 +94,11 @@ namespace EmployeeManagement.Application.Services
         {
             try
             {
-                if(employeeId == null || userId == null)
-                {
-                    throw new ArgumentException("Organization or userId not provided");
-                }
+                if(employeeId == null || userId == null) throw new ArgumentException("Organization or userId not provided");
+
                 var user = await _userManager.FindByIdAsync(userId);
-                if(user == null)
-                {
-                    throw new Exception($"User with is {user.Id} not found");
-                }
+                if(user == null) throw new Exception($"User with is {user.Id} not found");
+
                 var roles = await _userManager.GetRolesAsync(user);
                 
                 var updatedEmployee = await _employeeRepository.UpdateEmloyee(model, employeeId, userId, roles[0]);
@@ -167,15 +150,13 @@ namespace EmployeeManagement.Application.Services
         {
             try
             {
-                if(await _userManager.FindByIdAsync(userId) == null)
-                {
+                if(await _userManager.FindByIdAsync(userId) == null) 
                     throw new Exception($"User with id {userId} can not be found");
-                }
+
                 bool isOrganizationExisits = await _organizationRepository.IsOrganizationExisits(organizationId);
                 if (!isOrganizationExisits)
-                {
                     throw new Exception($"Organization with id {organizationId} doesn't exists");
-                }
+
                 IEnumerable<Employee> employees = await _employeeRepository.GetEmployeesCreatedByUser(userId, organizationId);
                 //if (employees == null)
                 //{
@@ -193,10 +174,8 @@ namespace EmployeeManagement.Application.Services
         {
             try
             {
-                if (await _userManager.FindByIdAsync(userId) == null)
-                {
-                    throw new Exception("User not found");
-                }
+                if (await _userManager.FindByIdAsync(userId) == null) throw new Exception("User not found");
+
                 IEnumerable<EmployeeDTO> hrList = await _employeeRepository.GetAllHr(organizationId);
                 return hrList;
             }
@@ -210,10 +189,8 @@ namespace EmployeeManagement.Application.Services
         {
             try
             { 
-                if (await _userManager.FindByIdAsync(userId) == null)
-                {
-                    throw new Exception("User not found");
-                }
+                if (await _userManager.FindByIdAsync(userId) == null) throw new Exception("User not found");
+
                 IEnumerable<EmployeeDTO> empList = await _employeeRepository.GetEmployeesInuserRole(organizationId);
                 return empList;
             }

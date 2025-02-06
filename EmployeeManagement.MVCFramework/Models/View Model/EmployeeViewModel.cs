@@ -24,8 +24,6 @@ namespace EmployeeManagement.MVCFramework.Models.View_Model
         public string Email { get; set; }
 
         [Required(AllowEmptyStrings = false)]
-        [MaxLength(10, ErrorMessage = "Phone Number cannot be larger than 10 digits")]
-        [MinLength(10, ErrorMessage = "Phone Number cannot be larger than 10 digits")]
         [DataType(DataType.PhoneNumber)]
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone Number must be exactly 10 digits.")]
         public string PhoneNumber { get; set; }

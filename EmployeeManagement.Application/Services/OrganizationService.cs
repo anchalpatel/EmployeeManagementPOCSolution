@@ -32,10 +32,7 @@ namespace EmployeeManagement.Application.Services
         {
             try
             {
-                if (await _userManager.FindByIdAsync(userId) == null)
-                {
-                    throw new ArgumentException("User not found");
-                }
+                if (await _userManager.FindByIdAsync(userId) == null) throw new ArgumentException("User not found");
 
                 return await _organizationRepository.CreateOrganization(model); ;
             }
@@ -53,11 +50,8 @@ namespace EmployeeManagement.Application.Services
         {
             try
             {
-                if (await _userManager.FindByIdAsync(userId) == null)
-                {
-                    throw new ArgumentException("User not found");
-                }
-               
+                if (await _userManager.FindByIdAsync(userId) == null) throw new ArgumentException("User not found");
+
                 var organization = await _organizationRepository.UpdateOrganization(model, organizationId);
 
                 return organization;
@@ -71,15 +65,12 @@ namespace EmployeeManagement.Application.Services
         {
             try
             {
-                if (await _userManager.FindByIdAsync(userId) == null)
-                {
+                if (await _userManager.FindByIdAsync(userId) == null) 
                     throw new ArgumentException("User not found");
-                }
 
-                if (!await _organizationRepository.DeleteOrganization(organizationId))
-                {
+                if (!await _organizationRepository.DeleteOrganization(organizationId)) 
                     throw new Exception("Error occured in deleting organization");
-                }
+
                 return true;
             }
             catch(Exception ex)
@@ -93,10 +84,7 @@ namespace EmployeeManagement.Application.Services
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                {
-                    throw new ArgumentException("User not found");
-                }
+                if (user == null) throw new ArgumentException("User not found");
 
                 var register = await _userRepository.RegisterUserAsync(new RegisterUser()
                 {
@@ -111,10 +99,7 @@ namespace EmployeeManagement.Application.Services
 
                 employee.userId = register.UserId;
                 var emp = await _employeeRepository.CreateEmoloyee(employee, organizationId, userId);
-                if(emp == null)
-                {
-                    throw new Exception("Employee cannot be added");
-                }
+                if(emp == null) throw new Exception("Employee cannot be added");
 
                 //var adminUser = await _userManager.FindByEmailAsync(employee.Email);
                 //Adding superadmin role
@@ -136,26 +121,18 @@ namespace EmployeeManagement.Application.Services
         {
             try
             {
-                if(await _userManager.FindByIdAsync(userId) == null)
-                {
+                if(await _userManager.FindByIdAsync(userId) == null) 
                     throw new UnauthorizedAccessException("User not found");
-                }
 
                 var emp = await _dbContext.Employees.FirstOrDefaultAsync(emp => emp.Id == employeeId);
-                if (emp == null)
-                {
-                    throw new Exception("Employee cannot be removed");
-                }
-                
-                if (!await _employeeRepository.DeleteEmployee(employeeId))
-                {
+                if (emp == null) throw new Exception("Employee cannot be removed");
+              
+                if (!await _employeeRepository.DeleteEmployee(employeeId)) 
                     throw new Exception("Employe can not be deleted");
-                }
-                
-                if (!await _userRepository.RemoveUserAsync(emp.UserId))
-                {
+              
+                if (!await _userRepository.RemoveUserAsync(emp.UserId)) 
                     throw new Exception("User can not be deleted");
-                }
+                
                 return true;
                 
             }catch(Exception ex)

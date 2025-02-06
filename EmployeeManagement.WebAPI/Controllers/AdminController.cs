@@ -27,18 +27,13 @@ namespace EmployeeManagement.WebAPI.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    throw new Exception("Please enter valid data");
-                }
+                if (!ModelState.IsValid) throw new Exception("Please enter valid data");
+               
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var organizationId = User.FindFirst(c => c.Type == "OrganizationId")?.Value;
 
-                if (userId == null || organizationId == null)
-                {
-                    return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id or organization id not found in token" });
+                if (userId == null || organizationId == null) return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id or organization id not found in token" });
 
-                }
                 var hr = await _adminService.CreateHr(model, userId, Convert.ToInt32(organizationId));
                 return Ok(new ResponseDTO<object>{ Success = true, Data = hr, Message = "Hr Created successfully" });
             }
@@ -62,17 +57,12 @@ namespace EmployeeManagement.WebAPI.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    throw new Exception("Please enter valid data");
-                }
+                if (!ModelState.IsValid) throw new Exception("Please enter valid data");
+               
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                if (userId == null)
-                {
-                    return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
+                if (userId == null) return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
 
-                }
                 bool isDeleted = await _adminService.RemoveHr(employeeId, userId);
                 return Ok(new ResponseDTO<object>{ Success = true, Message = "Hr Deleted successfully" });
             }
@@ -101,10 +91,8 @@ namespace EmployeeManagement.WebAPI.Controllers
             
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                if (userId == null)
-                {
-                    return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
-                }
+                if (userId == null) return Unauthorized(new ResponseDTO<object> { Success = false, Message = "User id not found in token" });
+
                 var hrList = await _employeeService.GetHrList(organizationId, userId);
                 return Ok(new ResponseDTO<object>{ Success = true, Message = "Hr Deleted successfully" , Data = hrList});
             }

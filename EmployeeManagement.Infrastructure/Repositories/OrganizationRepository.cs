@@ -42,10 +42,8 @@ namespace EmployeeManagement.Infrastructure.Repositories
                     UpdatedAt = DateTime.UtcNow,
                 };
                 var result = await _context.Organizations.AddAsync(organization);
-                if (result == null)
-                {
-                    throw new Exception("Organization can not be created");
-                }
+                if (result == null) throw new Exception("Organization can not be created");
+
                 await _context.SaveChangesAsync();
                 return organization;
             }
@@ -63,9 +61,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
                 .FirstOrDefaultAsync(o => o.Id == organizationId && o.IsDeleted == false);
 
                 if (organization == null)
-                {
                     throw new ArgumentException("Organization does not exist or has already been deleted");
-                }
 
                 organization.IsDeleted = true;
                 var employees = await _context.Employees
@@ -78,9 +74,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
 
                     var removeUserFromAllRoles = await _roleRepository.RemoveAllRoles(employee.UserId);
                     if (!removeUserFromAllRoles)
-                    {
                         throw new Exception($"Employee {employee.FirstName} {employee.LastName} could not be removed from roles");
-                    }
                 }
 
                 await _context.SaveChangesAsync();
@@ -107,9 +101,7 @@ namespace EmployeeManagement.Infrastructure.Repositories
                                                  select new { org, emp }).ToListAsync();
 
                 if (organizationDetails == null)
-                {
                     throw new Exception("Organization not found");
-                }
 
                 var organizationDTO = organizationDetails
                                      .GroupBy(x => x.org.Id)

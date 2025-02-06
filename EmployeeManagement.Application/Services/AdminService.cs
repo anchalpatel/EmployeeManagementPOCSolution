@@ -75,22 +75,14 @@ namespace EmployeeManagement.Application.Services
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                {
-                    throw new UnauthorizedAccessException("User not found");
-                }
+                if (user == null) throw new UnauthorizedAccessException("User not found");
 
                 var emp = await _dbContext.Employees.FirstOrDefaultAsync(emp => emp.Id == employeeId);
               
-                if (!await _employeeRepository.DeleteEmployee(employeeId))
-                {
-                    throw new Exception("Employe can not be deleted");
-                }
-                
-                if (!await _userRepository.RemoveUserAsync(emp.UserId))
-                {
-                    throw new Exception("User can not be deleted");
-                }
+                if (!await _employeeRepository.DeleteEmployee(employeeId)) throw new Exception("Employe can not be deleted");
+
+                if (!await _userRepository.RemoveUserAsync(emp.UserId)) throw new Exception("User can not be deleted");
+             
                 return true;
 
             }

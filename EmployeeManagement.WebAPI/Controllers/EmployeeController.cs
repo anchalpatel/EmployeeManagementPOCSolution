@@ -26,16 +26,12 @@ namespace EmployeeManagement.WebAPI.Controllers
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 string organizationIdStr = User.FindFirst(c => c.Type == "OrganizationId")?.Value;
                 int organizationId = Convert.ToInt32(organizationIdStr);
-                if (userId == null || organizationId == null)
-                {
-                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
-                }
+                if (userId == null || organizationId == null) return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
+
 
                 var employee = await _employeeService.CreateEmployee(model, userId, organizationId);
-                if (employee == null)
-                {
-                    throw new Exception("Employee can not be created");
-                }
+                if (employee == null) throw new Exception("Employee can not be created");
+       
                 return Ok(new ResponseDTO<object>{ Success = true, Message = "Employee Created successfully", Data = employee });
             }
             catch (Exception ex)
@@ -52,16 +48,10 @@ namespace EmployeeManagement.WebAPI.Controllers
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 string organizationIdStr = User.FindFirst(c => c.Type == "OrganizationId")?.Value;
                 int organizationId = Convert.ToInt32(organizationIdStr);
-                if (userId == null || organizationId == null)
-                {
-                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
-                }
+                if (userId == null || organizationId == null) return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
 
                 var employee = await _employeeService.UpdateEmployee(model, employeeId, userId);
-                //if (employee == null)
-                //{
-                //    throw new Exception("Employee can not be updated");
-                //}
+               
                 return Ok(new ResponseDTO<object> { Success = true, Message = "Employee Updated successfully", Data = employee });
             }
             catch (Exception ex)
@@ -78,10 +68,7 @@ namespace EmployeeManagement.WebAPI.Controllers
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 string organizationIdStr = User.FindFirst(c => c.Type == "OrganizationId")?.Value;
                 int organizationId = Convert.ToInt32(organizationIdStr);
-                if (userId == null || organizationId == null)
-                {
-                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
-                }
+                if (userId == null || organizationId == null) return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
 
                 var IsDeleted = await _employeeService.RemoveEmpoyee(employeeId, userId);
                
@@ -99,10 +86,8 @@ namespace EmployeeManagement.WebAPI.Controllers
             try
             {
                 IEnumerable<EmployeeDTO> employees = await _employeeService.GetAllEmployees(organizationId);
-                if (employees == null)
-                {
-                    return NotFound(new ResponseDTO<object>{ Success = false, Message = "No employee found" });
-                }
+                if (employees == null) return NotFound(new ResponseDTO<object> { Success = false, Message = "No employee found" });
+
                 return Ok(new ResponseDTO<object>{ Success = true, Data = employees, Message = "Employees fetched successfully" });
             }
             catch (Exception ex)
@@ -135,11 +120,9 @@ namespace EmployeeManagement.WebAPI.Controllers
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 string organizationIdStr = User.FindFirst(c => c.Type == "OrganizationId")?.Value;
                 int organizationId = Convert.ToInt32(organizationIdStr);
-                if (userId == null || organizationId == null)
-                {
-                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
 
-                }
+                if (userId == null || organizationId == null) return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
+
                 var employees = await _employeeService.GetEmployeeCreatedByUser(userId, organizationId);
                 return Ok(new ResponseDTO<object>{ Success = true, Message = "Employee details fetched successfully", Data = employees });
             }
@@ -157,11 +140,7 @@ namespace EmployeeManagement.WebAPI.Controllers
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 string organizationIdStr = User.FindFirst(c => c.Type == "OrganizationId")?.Value;
                 int organizationId = Convert.ToInt32(organizationIdStr);
-                if (userId == null || organizationId == null)
-                {
-                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
-
-                }
+                if (userId == null || organizationId == null) return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
                 var hrList = await _employeeService.GetHrList(organizationId, userId);
                 return Ok(new ResponseDTO<object>{ Success = true, Message = "Hr details fetched successfully", Data = hrList });
             }
@@ -179,10 +158,8 @@ namespace EmployeeManagement.WebAPI.Controllers
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 string organizationIdStr = User.FindFirst(c => c.Type == "OrganizationId")?.Value;
                 int organizationId = Convert.ToInt32(organizationIdStr);
-                if (userId == null || organizationId == null)
-                {
-                    return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
-                }
+                if (userId == null || organizationId == null) return BadRequest(new ResponseDTO<object> { Success = false, Message = "User Id or Organization Id not found" });
+
                 var empList = await _employeeService.GetEmployeeInUserRole(organizationId, userId);
                 return Ok(new ResponseDTO<object>{ Success = true, Message = "Hr details fetched successfully", Data = empList });
             }

@@ -33,7 +33,14 @@ namespace EmployeeManagement.Application.Services
                     
                 }
                 
-                return await _jwtService.GenerateToken(user.UserId, user.UserName, organizationId, createdBy, organizationName);
+                return await _jwtService.GenerateToken(new TokenDTO
+                                                            {
+                                                                userId = user.UserId,
+                                                                organizationId = organizationId,
+                                                                createdBy = createdBy,
+                                                                organizationName = organizationName,
+                                                                userName = user.UserName
+                                                            });
             }
             return null;
         }
@@ -66,8 +73,15 @@ namespace EmployeeManagement.Application.Services
                         }
                     }
                 }
-                
-                return await _jwtService.GenerateToken(user.UserId, user.UserName, organizationId, createdBy, organizationName);
+
+                return await _jwtService.GenerateToken(new TokenDTO
+                {
+                    userId = user.UserId,
+                    organizationId = organizationId,
+                    createdBy = createdBy,
+                    organizationName = organizationName,
+                    userName = user.UserName
+                });
             }
             return null;
         }

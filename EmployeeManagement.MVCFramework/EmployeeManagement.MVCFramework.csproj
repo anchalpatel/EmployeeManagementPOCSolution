@@ -250,11 +250,13 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\HRController.cs" />
     <Compile Include="Controllers\OrganizationController.cs" />
+    <Compile Include="CustomAttributes\TokenValidationAttribute.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\TokenHelper.cs" />
     <Compile Include="Models\ApiResponse.cs" />
+    <Compile Include="Models\AuthApiResponse.cs" />
     <Compile Include="Models\View Model\EmployeeUpdateModel.cs" />
     <Compile Include="Models\View Model\EmployeeViewModel.cs" />
     <Compile Include="Models\View Model\LoginViewModel.cs" />

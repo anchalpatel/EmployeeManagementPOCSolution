@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -8,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using EmployeeManagement.MVCFramework.CustomAttributes;
 using EmployeeManagement.MVCFramework.Models;
 using EmployeeManagement.MVCFramework.Models.View_Model;
 using Newtonsoft.Json;
@@ -15,6 +17,7 @@ using Newtonsoft.Json.Linq;
 
 namespace EmployeeManagement.MVCFramework.Controllers
 {
+    [TokenValidation]
     public class OrganizationController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -22,17 +25,14 @@ namespace EmployeeManagement.MVCFramework.Controllers
         public OrganizationController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("https://localhost:7057/");
+            _httpClient.BaseAddress = new Uri(ConfigurationManager.ConnectionStrings["ServerConnectionString"].ConnectionString);
 
         }
         [HttpGet]
         public async Task<ActionResult> GetAllOrganizations()
         {
             var token = Session["AuthToken"]?.ToString();
-            if (token == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            //if (token == null) return RedirectToAction("Login", "Account");
 
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -92,10 +92,7 @@ namespace EmployeeManagement.MVCFramework.Controllers
         public async Task<ActionResult> DeleteOrganization(int organizationId)
         {
             var token = Session["AuthToken"]?.ToString();
-            if (token == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            //if (token == null) return RedirectToAction("Login", "Account");
 
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -119,10 +116,7 @@ namespace EmployeeManagement.MVCFramework.Controllers
         public async Task<ActionResult> UpdateOrganization(int organizationId)
         {
             var token = Session["AuthToken"]?.ToString();
-            if (token == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+           //if (token == null) return RedirectToAction("Login", "Account");
 
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -158,10 +152,7 @@ namespace EmployeeManagement.MVCFramework.Controllers
             if (ModelState.IsValid)
             {
                 var token = Session["AuthToken"]?.ToString();
-                if (token == null)
-                {
-                    return RedirectToAction("Login", "Account");
-                }
+                //if (token == null) return RedirectToAction("Login", "Account");
 
                 var orgObj = new { Name = model.Name, Address = model.Address };
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -194,10 +185,10 @@ namespace EmployeeManagement.MVCFramework.Controllers
             if (ModelState.IsValid)
             {
                 var token = Session["AuthToken"]?.ToString();
-                if (token == null)
-                {
-                    return RedirectToAction("Login", "Account");
-                }
+                //if (token == null)
+                //{
+                //    return RedirectToAction("Login", "Account");
+                //}
 
                 var orgObj = new { Name = model.Name, Address = model.Address };
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);

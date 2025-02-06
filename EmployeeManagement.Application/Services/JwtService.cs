@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using EmployeeManagement.Application.ServiceInterface;
+using EmployeeManagement.Core.DTO;
 using EmployeeManagement.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -29,26 +30,26 @@ namespace EmployeeManagement.Application.Services
             _userManager = userManager;
             _dbContext = dbContext;
         }
-        public async Task<string> GenerateToken(string userId, string userName, int organiationId, string createdBy, string organizationName)
+        public async Task<string> GenerateToken(TokenDTO tokenDto)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByIdAsync(tokenDto.userId);
             var userRoles = await (from duser in _dbContext.Users
                                join ur in _dbContext.UserRoles
                                on duser.Id equals ur.UserId
                                join uRole in _dbContext.Roles
                                on ur.RoleId equals uRole.Id
-                               where duser.Id == userId
+                               where duser.Id == tokenDto.userId
                                && ur.IsDeleted == false
                                && duser.IsDeleted == false
                                && uRole.IsDeleted == false
                                select uRole.Name).ToListAsync();
             var claims = new List<Claim>
             { 
-                new Claim(ClaimTypes.NameIdentifier, userId),
-                new Claim("Name", userName),
-                new Claim("OrganizationId", organiationId.ToString()),
-                new Claim("CreatedBy", createdBy),
-                new Claim("OrganizationName", organizationName)
+                new Claim(ClaimTypes.NameIdentifier, tokenDto.userId),
+                new Claim("Name", tokenDto.userName),
+                new Claim("OrganizationId", tokenDto.organizationId.ToString()),
+                new Claim("CreatedBy", tokenDto.createdBy),
+                new Claim("OrganizationName", tokenDto.organizationName)
             };
            
             foreach (var role in userRoles)

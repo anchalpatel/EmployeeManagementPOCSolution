@@ -12,9 +12,12 @@ using System.Net.Http.Json;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Web.Security;
+using System.Configuration;
+using EmployeeManagement.MVCFramework.CustomAttributes;
 
 namespace EmployeeManagement.MVCFramework.Controllers
 {
+    [TokenValidation]
     public class HRController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -22,17 +25,14 @@ namespace EmployeeManagement.MVCFramework.Controllers
         public HRController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("https://localhost:7057/");
+            _httpClient.BaseAddress = new Uri(ConfigurationManager.ConnectionStrings["ServerConnectionString"].ConnectionString);
 
         }
         [HttpGet]
         public async Task<ActionResult> ManageHR()
         {
             var token = Session["AuthToken"]?.ToString();
-            if (token == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            //if (token == null) return RedirectToAction("Login", "Account");
 
             var organizationId = TokenHelper.GetClaimFromToken(token, "OrganizationId");
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -90,10 +90,8 @@ namespace EmployeeManagement.MVCFramework.Controllers
         [HttpPost]
         public async Task<ActionResult> CreateHR(EmployeeViewModel model)
         {
-            if (model.Password == null)
-            {
-                ModelState.AddModelError("", "Password is required.");
-            }
+            if (model.Password == null) ModelState.AddModelError("", "Password is required.");
+      
             if (ModelState.IsValid)
             {
                 var token = Session["AuthToken"]?.ToString();
@@ -149,10 +147,8 @@ namespace EmployeeManagement.MVCFramework.Controllers
         public async Task<ActionResult> DeleteHR(int employeeId)
         {
             var token = Session["AuthToken"]?.ToString();
-            if (token == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            //if (token == null) return RedirectToAction("Login", "Account");
+
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
             var response = await _httpClient.DeleteAsync($"api/Admin/removeHR/{employeeId}");
@@ -181,10 +177,7 @@ namespace EmployeeManagement.MVCFramework.Controllers
         public async Task<ActionResult> UpdateHR(int employeeId)
         {
             var token = Session["AuthToken"]?.ToString();
-            if (token == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            //if (token == null) return RedirectToAction("Login", "Account");
 
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -229,10 +222,7 @@ namespace EmployeeManagement.MVCFramework.Controllers
             if (ModelState.IsValid)
             {
                 var token = Session["AuthToken"]?.ToString();
-                if (token == null)
-                {
-                    return RedirectToAction("Login", "Account");
-                }
+                //if (token == null) return RedirectToAction("Login", "Account");
 
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
